@@ -16,7 +16,7 @@ class SpeedManagement(private val context: Context, private val view: View) {
     private val colorUnder80 = ContextCompat.getColor(context, R.color.blue)
     private val colorOver80 = ContextCompat.getColor(context, R.color.black)
 
-    // Function to determine the speed category in a single place
+    /*// Function to determine the speed category in a single place
     fun getSpeedCategory(speed: Int): SpeedCategory {
         return when {
             speed in 20..25 || speed in 40..45 || speed in 60..65 || speed in 74..76 -> SpeedCategory.SPEEDING_UP
@@ -24,7 +24,43 @@ class SpeedManagement(private val context: Context, private val view: View) {
             speed in 31..35 || speed in 50..54 || speed in 70..74 || speed in 80..84 -> SpeedCategory.SLOWING_DOWN
             else -> SpeedCategory.UNKNOWN
         }
+    }*/
+
+    // Multiple ideal cruise speeds
+    private val idealCruiseSpeeds = listOf(29, 49, 69, 79)  // Define multiple ideal cruise speeds here
+    private val belowCruiseMargin = 3  // Margin below the ideal cruise speed
+    private val aboveCruiseMargin = 2  // Margin above the ideal cruise speed
+    private val speedUpMargin = 5       // Range below cruise for speeding up
+    private val slowDownMargin = 5      // Range above cruise for slowing down
+
+    fun getSpeedCategory(speed: Int): SpeedCategory {
+        for (idealCruise in idealCruiseSpeeds) {
+            when (speed) {
+                in getSpeedingUpRange(idealCruise) -> return SpeedCategory.SPEEDING_UP
+                in getCruisingRange(idealCruise) -> return SpeedCategory.CRUISING
+                in getSlowingDownRange(idealCruise) -> return SpeedCategory.SLOWING_DOWN
+            }
+        }
+        return SpeedCategory.UNKNOWN
     }
+
+    // Calculate the cruising range with asymmetrical margins
+    private fun getCruisingRange(idealCruise: Int): IntRange {
+        return (idealCruise - belowCruiseMargin)..(idealCruise + aboveCruiseMargin)
+    }
+
+    // Calculate the speeding up range (below cruise)
+    private fun getSpeedingUpRange(idealCruise: Int): IntRange {
+        return (idealCruise - speedUpMargin - belowCruiseMargin) until (idealCruise - belowCruiseMargin)
+    }
+
+    // Calculate the slowing down range (above cruise)
+    private fun getSlowingDownRange(idealCruise: Int): IntRange {
+        return (idealCruise + aboveCruiseMargin + 1)..(idealCruise + aboveCruiseMargin + slowDownMargin)
+    }
+
+
+
 
     // Function to check if the speed has changed significantly
     fun hasSpeedChanged(currentSpeed: Int): Boolean {

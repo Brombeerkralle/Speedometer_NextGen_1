@@ -1,36 +1,21 @@
 package com.example.speedometer_nextgen_1
 
-import android.Manifest
-import android.content.pm.PackageManager
-import android.location.Location
-import android.media.AudioAttributes
-import android.media.MediaPlayer
+
 import android.os.Bundle
-import android.os.Looper
-import android.util.Log
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.speedometer_nextgen_1.databinding.ActivityMainBinding
-import com.google.android.gms.location.*
 import pub.devrel.easypermissions.EasyPermissions
-import pub.devrel.easypermissions.AppSettingsDialog
-import kotlin.math.abs
-import kotlin.properties.Delegates
-import java.util.Locale
 import android.media.AudioManager
 import android.content.Context
 import android.graphics.drawable.GradientDrawable
-import android.media.AudioFocusRequest
-import android.media.AudioManager.AUDIOFOCUS_GAIN
-import android.os.Build
 
 class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, EasyPermissions.RationaleCallbacks {
 
@@ -96,6 +81,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
         val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
         mediaPlayerPlus = MediaPlayerPlus(this, audioManager )
 
+        gpsGetSpeed.askForLocationPermission()
         gpsGetSpeed = GPSgetSpeed(this, this)
         gpsGetSpeed.initializeLocationServices()
     }

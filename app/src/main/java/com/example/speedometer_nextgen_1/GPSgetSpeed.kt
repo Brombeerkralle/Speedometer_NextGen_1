@@ -1,12 +1,10 @@
 package com.example.speedometer_nextgen_1
 
 import android.Manifest
-import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Looper
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
-import com.example.speedometer_nextgen_1.databinding.ActivityMainBinding
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest

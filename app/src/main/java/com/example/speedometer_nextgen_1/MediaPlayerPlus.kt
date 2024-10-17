@@ -2,7 +2,6 @@ package com.example.speedometer_nextgen_1
 
 import android.content.Context
 import android.media.AudioAttributes
-import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.media.MediaPlayer
 
@@ -18,26 +17,23 @@ class MediaPlayerPlus(private val context: Context, var audioManager: AudioManag
             mediaPlayer = null
         }
 
+        val audioAttributes = AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_MEDIA)
+            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+            .build()
 
-            mediaPlayer?.release()
+        val soundResId = when (speedCategory) {
+            SpeedCategory.SPEEDING_UP -> R.raw.speedup
+            SpeedCategory.CRUISING -> R.raw.maintainspeed
+            SpeedCategory.SLOWING_DOWN -> R.raw.speeddown
+            SpeedCategory.UNKNOWN -> R.raw.backgroundstrings
+        }
 
-            val audioAttributes = AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_MEDIA)
-                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                .build()
-
-            val soundResId = when (speedCategory) {
-                SpeedCategory.SPEEDING_UP -> R.raw.speedup
-                SpeedCategory.CRUISING -> R.raw.maintainspeed
-                SpeedCategory.SLOWING_DOWN -> R.raw.speeddown
-                SpeedCategory.UNKNOWN -> R.raw.backgroundstrings
-            }
-
-            mediaPlayer = MediaPlayer.create(context, soundResId).apply {
-                setAudioAttributes(audioAttributes)
-                setVolume(1.0f, 1.0f)
-                start()
-            }
+        mediaPlayer = MediaPlayer.create(context, soundResId).apply {
+            setAudioAttributes(audioAttributes)
+            setVolume(1.0f, 1.0f)
+            start()
+        }
     }
 
     // Function to play silent audio (optional, if the issue persists)
