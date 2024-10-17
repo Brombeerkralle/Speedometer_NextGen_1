@@ -27,7 +27,7 @@ class SpeedManagement(private val context: Context, private val view: View) {
     }*/
 
     // Multiple ideal cruise speeds
-    private val idealCruiseSpeeds = listOf(29, 49, 69, 79)  // Define multiple ideal cruise speeds here
+    private val idealCruiseSpeeds = listOf(30, 50, 70, 80)  // Define multiple ideal cruise speeds here
     private val belowCruiseMargin = 3  // Margin below the ideal cruise speed
     private val aboveCruiseMargin = 2  // Margin above the ideal cruise speed
     private val speedUpMargin = 5       // Range below cruise for speeding up
@@ -35,10 +35,10 @@ class SpeedManagement(private val context: Context, private val view: View) {
 
     fun getSpeedCategory(speed: Int): SpeedCategory {
         for (idealCruise in idealCruiseSpeeds) {
-            when (speed) {
-                in getSpeedingUpRange(idealCruise) -> return SpeedCategory.SPEEDING_UP
-                in getCruisingRange(idealCruise) -> return SpeedCategory.CRUISING
-                in getSlowingDownRange(idealCruise) -> return SpeedCategory.SLOWING_DOWN
+            when {
+                speed in getSpeedingUpRange(idealCruise) -> return SpeedCategory.SPEEDING_UP
+                speed in getCruisingRange(idealCruise) -> return SpeedCategory.CRUISING
+                speed in getSlowingDownRange(idealCruise) -> return SpeedCategory.SLOWING_DOWN
             }
         }
         return SpeedCategory.UNKNOWN

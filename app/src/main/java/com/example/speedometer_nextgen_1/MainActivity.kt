@@ -81,7 +81,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
         val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
         mediaPlayerPlus = MediaPlayerPlus(this, audioManager )
 
-        gpsGetSpeed.askForLocationPermission()
+
         gpsGetSpeed = GPSgetSpeed(this, this)
         gpsGetSpeed.initializeLocationServices()
     }
