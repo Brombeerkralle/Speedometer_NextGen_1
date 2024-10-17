@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="currentSpeedId" type="id" />
+    <item name="currentSpeedDecimalId" type="id" />
+    <item name="kmhTextView" type="id" />
+    <item name="textClock" type="id" />
+    <item name="speedInput" type="id" />
+    <item name="playMusicButton" type="id" />
+    <item name="main" type="id" />
+</resources>
