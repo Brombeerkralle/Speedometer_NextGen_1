@@ -127,8 +127,8 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
         binding.currentSpeedId.text = speed.toString()
         binding.currentSpeedDecimalId.text = speedAsDecimal
 
-        val speedHasChanged = speedManagement.didSpeedChange(speed)
-        val categoryHasChanged = speedManagement.didCategoryChange(speed)
+        val speedHasChanged = speedManagement.hasSpeedChanged(speed)
+        val categoryHasChanged = speedManagement.hasCategoryChanged(speed)
 
         if (categoryHasChanged) {
             mediaPlayerPlus.playMusic(speedManagement.getSpeedCategory(speed))

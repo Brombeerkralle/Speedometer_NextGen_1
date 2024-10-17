@@ -9,50 +9,6 @@ import android.media.MediaPlayer
 class MediaPlayerPlus(private val context: Context, var audioManager: AudioManager) {
 
     private var mediaPlayer: MediaPlayer? = null
-    private var audioFocusRequest: AudioFocusRequest? = null
-
-    /*// Function to request audio focus
-    fun requestAudioFocus(): Boolean {
-        return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            audioFocusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
-                .setAudioAttributes(
-                    AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_MEDIA)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                        .build()
-                )
-                .setOnAudioFocusChangeListener { focusChange ->
-                    if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
-                        mediaPlayer?.pause()
-                    }
-                }
-                .build()
-            val result = audioManager.requestAudioFocus(audioFocusRequest!!)
-            result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
-        } else {
-            // For API levels below 26, use the deprecated method
-            val result = audioManager.requestAudioFocus(
-                null,  // No listener for older versions
-                AudioManager.STREAM_MUSIC,
-                AudioManager.AUDIOFOCUS_GAIN
-            )
-            result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
-        }
-    }
-
-    // Function to release audio focus
-    fun releaseAudioFocus() {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            audioFocusRequest?.let {
-                audioManager.abandonAudioFocusRequest(it)
-            }
-        } else {
-            audioManager.abandonAudioFocus(null)
-        }
-    }
-    Request / Release audio focus causes error 8 -> no audfio is playing
-    */
-
 
     // Function to play music based on speed category
     fun playMusic(speedCategory: SpeedCategory) {
