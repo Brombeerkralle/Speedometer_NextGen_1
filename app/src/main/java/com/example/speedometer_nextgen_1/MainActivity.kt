@@ -16,6 +16,7 @@ import pub.devrel.easypermissions.EasyPermissions
 import android.media.AudioManager
 import android.content.Context
 import android.graphics.drawable.GradientDrawable
+import android.widget.SeekBar
 
 class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, EasyPermissions.RationaleCallbacks {
 
@@ -36,6 +37,8 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
 
         // Set up button and input for manual testing
         setupDebugButton()
+
+        setupVolumeControl()
     }
 
     // Function to initialize layout components, colors, and window insets
@@ -151,6 +154,26 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
         }
     }
 
+    private fun setupVolumeControl() {
+        val volumeSeekBar = findViewById<SeekBar>(R.id.volumeSeekBar)
+
+        // Set an onChange listener to update background volume
+        volumeSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                val volume = progress / 100.0f  // Convert progress (0-100) to volume (0.0-1.0)
+                mediaPlayerPlus.updateBackgroundVolume(volume)  // Update the background sound volume
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {
+                // Optional: Do something when the user starts touching the SeekBar
+            }
+
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                // Optional: Do something when the user stops touching the SeekBar
+            }
+        })
+    }
+
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this)
@@ -172,6 +195,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
         super.onPause()
         gpsGetSpeed.stopLocationUpdates()
         mediaPlayerPlus.release()
+        mediaPlayerPlus.releaseBackgroundPlayer()
         Toast.makeText(this, "Pause", Toast.LENGTH_SHORT).show()
     }
     override fun onRationaleAccepted(requestCode: Int) {}

@@ -122,13 +122,27 @@
             android:text="Play Music" />
     </LinearLayout>
 
-    <!-- Circle indicator light -->
-    <View
-        android:id="@+id/indicatorLight"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
-        android:layout_marginTop="20dp"
-        android:background="@drawable/circle_shape" />
+        android:orientation="horizontal"
+        android:layout_marginTop="20dp">
+
+        <!-- Circle indicator light -->
+        <View
+            android:id="@+id/indicatorLight"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:background="@drawable/circle_shape" />
+
+        <!-- Volume SeekBar -->
+        <SeekBar
+            android:id="@+id/volumeSeekBar"
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:max="100"
+            android:progress="50" />
+    </LinearLayout>
 
 </LinearLayout>
