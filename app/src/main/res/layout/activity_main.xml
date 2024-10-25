@@ -88,6 +88,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="0dp"
+        android:layout_marginBottom="0dp"
         android:format12Hour="HH:mm"
         android:shadowColor="#000000"
         android:shadowDx="7"
@@ -96,13 +97,24 @@
         android:textColor="#FFFFFF"
         android:textSize="140sp" />
 
+    <CheckBox
+        android:id="@+id/debugToggleCheckbox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="0dp"
+        android:checked="false"
+        android:text="Enable Debug Mode"
+        android:textColor="#FFFFFF" />
+
     <!-- Speed input and button for manual testing -->
     <LinearLayout
+        android:id="@+id/debugControlsLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:padding="16dp"
-        android:layout_marginTop="16dp">
+        android:layout_marginTop="16dp"
+        android:visibility="gone">
 
         <EditText
             android:id="@+id/speedInput"

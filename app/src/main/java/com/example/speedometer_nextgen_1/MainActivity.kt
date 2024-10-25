@@ -16,6 +16,9 @@ import pub.devrel.easypermissions.EasyPermissions
 import android.media.AudioManager
 import android.content.Context
 import android.graphics.drawable.GradientDrawable
+import android.view.View
+import android.widget.CheckBox
+import android.widget.LinearLayout
 import android.widget.SeekBar
 
 class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, EasyPermissions.RationaleCallbacks {
@@ -36,7 +39,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
 
 
         // Set up button and input for manual testing
-        setupDebugButton()
+        setupDebugToggle()
 
         setupVolumeControl()
     }
@@ -87,6 +90,19 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
 
         gpsGetSpeed = GPSgetSpeed(this, this)
         gpsGetSpeed.initializeLocationServices()
+    }
+
+    private fun setupDebugToggle() {
+        val debugToggleCheckbox = findViewById<CheckBox>(R.id.debugToggleCheckbox)
+        val debugControlsLayout = findViewById<LinearLayout>(R.id.debugControlsLayout)
+
+        debugToggleCheckbox.setOnCheckedChangeListener { _, isChecked ->
+            // Show debug controls if the checkbox is checked, hide otherwise
+            debugControlsLayout.visibility = if (isChecked) View.VISIBLE else View.GONE
+        }
+
+        // Retain the existing debug button setup within the debug controls layout
+        setupDebugButton()
     }
 
     // Set up the button for manual debugging and testing

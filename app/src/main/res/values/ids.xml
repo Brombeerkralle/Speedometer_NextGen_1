@@ -7,4 +7,5 @@
     <item name="speedInput" type="id" />
     <item name="playMusicButton" type="id" />
     <item name="main" type="id" />
+    <item name="debugControlsLayout" type="id" />
 </resources>
