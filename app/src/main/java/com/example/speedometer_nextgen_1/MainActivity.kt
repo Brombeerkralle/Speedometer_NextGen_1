@@ -1,6 +1,7 @@
 package com.example.speedometer_nextgen_1
 
 
+import android.app.AlertDialog
 import android.os.Bundle
 import android.view.WindowManager
 import android.widget.Button
@@ -20,8 +21,10 @@ import android.view.View
 import android.widget.CheckBox
 import android.widget.LinearLayout
 import android.widget.SeekBar
+import com.example.speedometer_nextgen_1.databinding.DialogVolumeControlBinding
 
 class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, EasyPermissions.RationaleCallbacks {
+
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var speedManagement: SpeedManagement
@@ -41,7 +44,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
         // Set up button and input for manual testing
         setupDebugToggle()
 
-        setupVolumeControl()
+        setupVolumeControlButton()
     }
 
     // Function to initialize layout components, colors, and window insets
@@ -170,25 +173,67 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
         }
     }
 
-    private fun setupVolumeControl() {
-        val volumeSeekBar = findViewById<SeekBar>(R.id.volumeSeekBar)
+    private fun setupVolumeControlButton() {
+        val volumeButton = findViewById<Button>(R.id.volumeControlButton)
 
-        // Set an onChange listener to update background volume
-        volumeSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                val volume = progress / 100.0f  // Convert progress (0-100) to volume (0.0-1.0)
-                mediaPlayerPlus.updateBackgroundVolume(volume)  // Update the background sound volume
-            }
-
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {
-                // Optional: Do something when the user starts touching the SeekBar
-            }
-
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {
-                // Optional: Do something when the user stops touching the SeekBar
-            }
-        })
+        volumeButton.setOnClickListener {
+            showVolumeControlDialog()
+        }
     }
+
+    private fun showVolumeControlDialog() {
+        // Inflate dialog view with View Binding
+        val dialogBinding = DialogVolumeControlBinding.inflate(layoutInflater)
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Volume Control")
+            .setView(dialogBinding.root)  // Use the binding's root view
+            .setNegativeButton("Confirm", null)
+            .create()
+
+        var isUnlocked = false  // Track if the user unlocked volume above 50%
+
+        dialogBinding.volumeSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                if (progress > 50 && !isUnlocked) {
+                    dialogBinding.volumeSeekBar.progress = 50  // Lock at 50%
+                    dialogBinding.volumeWarning.visibility = View.VISIBLE
+
+                    // Show confirmation dialog
+                    AlertDialog.Builder(this@MainActivity)
+                        .setTitle("Volume Warning")
+                        .setMessage("Listening at high volumes may damage hearing. Continue?")
+                        .setPositiveButton("Yes") { _, _ ->
+                            isUnlocked = true
+                            dialogBinding.volumeWarning.visibility = View.GONE
+                            dialogBinding.volumeSeekBar.progress = progress  // Unlock to chosen volume
+                        }
+                        .setNegativeButton("No") { _, _ ->
+                            isUnlocked = false
+                            dialogBinding.volumeSeekBar.progress = 50
+                        }
+                        .show()
+                } else if (progress <= 50) {
+                    isUnlocked = false  // Reset if below 50%
+                    dialogBinding.volumeWarning.visibility = View.GONE
+                }
+
+                val volume = dialogBinding.volumeSeekBar.progress / 100.0f
+                mediaPlayerPlus.updateBackgroundVolume(volume)
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
+
+        dialog.show()
+
+        // Set custom dimensions for the dialog
+        dialog.window?.setLayout(
+            WindowManager.LayoutParams.WRAP_CONTENT,  // Keep width as wrap content
+            (resources.displayMetrics.heightPixels * 0.4).toInt()  // Set height to 40% of the screen height
+        )
+    }
+
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)

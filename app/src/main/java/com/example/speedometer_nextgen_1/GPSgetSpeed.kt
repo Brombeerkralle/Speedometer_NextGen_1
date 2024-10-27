@@ -1,6 +1,7 @@
 package com.example.speedometer_nextgen_1
 
 import android.Manifest
+import android.app.Activity
 import android.content.pm.PackageManager
 import android.os.Looper
 import android.widget.Toast
@@ -16,7 +17,7 @@ import pub.devrel.easypermissions.EasyPermissions
 import java.util.Locale
 import kotlin.properties.Delegates
 
-class GPSgetSpeed(private val context: android.app.Activity, private val mainActivity: MainActivity) {
+class GPSgetSpeed(private val context: Activity, private val mainActivity: MainActivity) {
     // Constants
     private val locationPerm = 124
 
