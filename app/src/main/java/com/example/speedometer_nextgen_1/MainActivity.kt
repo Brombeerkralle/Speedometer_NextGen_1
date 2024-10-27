@@ -181,6 +181,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
         }
     }
 
+    var volume = 35.5f
     private fun showVolumeControlDialog() {
         // Inflate dialog view with View Binding
         val dialogBinding = DialogVolumeControlBinding.inflate(layoutInflater)
@@ -192,10 +193,12 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
 
         var isUnlocked = false  // Track if the user unlocked volume above 50%
 
+        dialogBinding.volumeSeekBar.progress = volume.toInt()
+
         dialogBinding.volumeSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 if (progress > 50 && !isUnlocked) {
-                    dialogBinding.volumeSeekBar.progress = 50  // Lock at 50%
+                    dialogBinding.volumeSeekBar.progress = volume.toInt()  // Lock at 50%
                     dialogBinding.volumeWarning.visibility = View.VISIBLE
 
                     // Show confirmation dialog
@@ -204,20 +207,20 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
                         .setMessage("Listening at high volumes may damage hearing. Continue?")
                         .setPositiveButton("Yes") { _, _ ->
                             isUnlocked = true
-                            dialogBinding.volumeWarning.visibility = View.GONE
                             dialogBinding.volumeSeekBar.progress = progress  // Unlock to chosen volume
                         }
                         .setNegativeButton("No") { _, _ ->
-                            isUnlocked = false
+                            //isUnlocked = false
+                            dialogBinding.volumeWarning.visibility = View.GONE
                             dialogBinding.volumeSeekBar.progress = 50
                         }
+                        .create()
                         .show()
-                } else if (progress <= 50) {
+                } else if (progress <= 20) {
                     isUnlocked = false  // Reset if below 50%
-                    dialogBinding.volumeWarning.visibility = View.GONE
                 }
 
-                val volume = dialogBinding.volumeSeekBar.progress / 100.0f
+                volume = (dialogBinding.volumeSeekBar.progress / 100.0f)
                 mediaPlayerPlus.updateBackgroundVolume(volume)
             }
 
@@ -230,7 +233,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
         // Set custom dimensions for the dialog
         dialog.window?.setLayout(
             WindowManager.LayoutParams.WRAP_CONTENT,  // Keep width as wrap content
-            (resources.displayMetrics.heightPixels * 0.4).toInt()  // Set height to 40% of the screen height
+            (resources.displayMetrics.heightPixels * 0.6).toInt()  // Set height to 40% of the screen height
         )
     }
 
