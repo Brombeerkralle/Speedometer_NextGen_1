@@ -30,6 +30,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
     private lateinit var speedManagement: SpeedManagement
     private lateinit var mediaPlayerPlus: MediaPlayerPlus
     private lateinit var gpsGetSpeed: GPSgetSpeed
+    private lateinit var volumeControlManager: VolumeControlManager  // New manager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -93,6 +94,9 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
 
         gpsGetSpeed = GPSgetSpeed(this, this)
         gpsGetSpeed.initializeLocationServices()
+
+        // Initialize VolumeControlManager with mediaPlayerPlus
+        volumeControlManager = VolumeControlManager(this, mediaPlayerPlus)
     }
 
     private fun setupDebugToggle() {
@@ -177,66 +181,9 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
         val volumeButton = findViewById<Button>(R.id.volumeControlButton)
 
         volumeButton.setOnClickListener {
-            showVolumeControlDialog()
+            volumeControlManager.showVolumeControlDialog()
         }
     }
-
-    var volume = 35.5f
-    private fun showVolumeControlDialog() {
-        // Inflate dialog view with View Binding
-        val dialogBinding = DialogVolumeControlBinding.inflate(layoutInflater)
-        val dialog = AlertDialog.Builder(this)
-            .setTitle("Volume Control")
-            .setView(dialogBinding.root)  // Use the binding's root view
-            .setNegativeButton("Confirm", null)
-            .create()
-
-        var isUnlocked = false  // Track if the user unlocked volume above 50%
-
-        dialogBinding.volumeSeekBar.progress = volume.toInt()
-
-        dialogBinding.volumeSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                if (progress > 50 && !isUnlocked) {
-                    dialogBinding.volumeSeekBar.progress = volume.toInt()  // Lock at 50%
-                    dialogBinding.volumeWarning.visibility = View.VISIBLE
-
-                    // Show confirmation dialog
-                    AlertDialog.Builder(this@MainActivity)
-                        .setTitle("Volume Warning")
-                        .setMessage("Listening at high volumes may damage hearing. Continue?")
-                        .setPositiveButton("Yes") { _, _ ->
-                            isUnlocked = true
-                            dialogBinding.volumeSeekBar.progress = progress  // Unlock to chosen volume
-                        }
-                        .setNegativeButton("No") { _, _ ->
-                            //isUnlocked = false
-                            dialogBinding.volumeWarning.visibility = View.GONE
-                            dialogBinding.volumeSeekBar.progress = 50
-                        }
-                        .create()
-                        .show()
-                } else if (progress <= 20) {
-                    isUnlocked = false  // Reset if below 50%
-                }
-
-                volume = (dialogBinding.volumeSeekBar.progress / 100.0f)
-                mediaPlayerPlus.updateBackgroundVolume(volume)
-            }
-
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-        })
-
-        dialog.show()
-
-        // Set custom dimensions for the dialog
-        dialog.window?.setLayout(
-            WindowManager.LayoutParams.WRAP_CONTENT,  // Keep width as wrap content
-            (resources.displayMetrics.heightPixels * 0.6).toInt()  // Set height to 40% of the screen height
-        )
-    }
-
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)

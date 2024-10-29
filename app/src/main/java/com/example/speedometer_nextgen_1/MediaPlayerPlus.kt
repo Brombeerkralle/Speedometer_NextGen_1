@@ -26,9 +26,9 @@ class MediaPlayerPlus(private val context: Context, var audioManager: AudioManag
             .build()
 
         val soundResId = when (speedCategory) {
-            SpeedCategory.SPEEDING_UP -> R.raw.speedup
-            SpeedCategory.CRUISING -> R.raw.maintainspeed
-            SpeedCategory.SLOWING_DOWN -> R.raw.speeddown
+            SpeedCategory.SPEEDING_UP -> R.raw.speedupmaestro2
+            SpeedCategory.CRUISING -> R.raw.maintainmaestro2
+            SpeedCategory.SLOWING_DOWN -> R.raw.downmaestro2
             SpeedCategory.UNKNOWN -> null
         }
 
@@ -44,7 +44,7 @@ class MediaPlayerPlus(private val context: Context, var audioManager: AudioManag
     // Function to play silent audio (optional, if the issue persists)
     fun playSilentAudio() {
         if (backgroundPlayer == null) {
-            backgroundPlayer = MediaPlayer.create(context, R.raw.backgroundpiano).apply {
+            backgroundPlayer = MediaPlayer.create(context, R.raw.hintergrundemaestro2).apply {
                 setAudioAttributes(
                     AudioAttributes.Builder()
                         .setUsage(AudioAttributes.USAGE_MEDIA)
