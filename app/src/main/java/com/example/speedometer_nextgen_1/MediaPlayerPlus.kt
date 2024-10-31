@@ -1,15 +1,19 @@
 package com.example.speedometer_nextgen_1
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.media.AudioAttributes
-import android.media.AudioManager
 import android.media.MediaPlayer
 
-class MediaPlayerPlus(private val context: Context, var audioManager: AudioManager) {
+class MediaPlayerPlus(
+    private val context: Context,
+    initialBackgroundVolume: Float
+) {
 
     private var mediaPlayer: MediaPlayer? = null
     private var backgroundPlayer: MediaPlayer? = null
-    private var backgroundVolume: Float = 0.5f
+
+    private var backgroundVolume: Float = initialBackgroundVolume // Set initial background volume
 
     // Function to play music based on speed category
     fun playMusic(speedCategory: SpeedCategory) {

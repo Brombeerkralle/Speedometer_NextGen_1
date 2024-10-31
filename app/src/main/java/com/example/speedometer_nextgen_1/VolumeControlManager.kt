@@ -3,17 +3,21 @@ package com.example.speedometer_nextgen_1
 
 import android.app.AlertDialog
 import android.content.Context
+import android.content.SharedPreferences
 import android.view.WindowManager
 import android.widget.SeekBar
 import com.example.speedometer_nextgen_1.databinding.DialogVolumeControlBinding
 
 class VolumeControlManager(
     private val context: Context,
-    private val mediaPlayerPlus: MediaPlayerPlus
+    private val mediaPlayerPlus: MediaPlayerPlus,
+    private val sharedPreferences: SharedPreferences
 ) {
-    var volume = 35.5f  // Initial volume
+    private var volume: Float = sharedPreferences.getFloat("backgroundVolume", 0.01f)
     private var isDialogActive = false
     private var isVolumeMaxUnlocked = false  // Renamed from isBackgroundSoundMaxUnlocked
+
+    fun getBackgroundVolume(): Float = volume
 
     // Show the volume control dialog
     fun showVolumeControlDialog() {
@@ -41,7 +45,9 @@ class VolumeControlManager(
             }
 
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                saveVolume()
+            }
         })
 
         dialog.show()
@@ -51,6 +57,13 @@ class VolumeControlManager(
             WindowManager.LayoutParams.WRAP_CONTENT,
             (context.resources.displayMetrics.heightPixels * 0.6).toInt()
         )
+    }
+
+    private fun saveVolume() {
+        with(sharedPreferences.edit()) {
+            putFloat("backgroundVolume", volume)
+            apply()
+        }
     }
 
     // Show warning dialog for high volume
@@ -70,4 +83,6 @@ class VolumeControlManager(
             .setCancelable(false)
             .show()
     }
+
+
 }

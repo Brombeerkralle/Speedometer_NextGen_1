@@ -1,7 +1,6 @@
 package com.example.speedometer_nextgen_1
 
 
-import android.app.AlertDialog
 import android.os.Bundle
 import android.view.WindowManager
 import android.widget.Button
@@ -20,8 +19,6 @@ import android.graphics.drawable.GradientDrawable
 import android.view.View
 import android.widget.CheckBox
 import android.widget.LinearLayout
-import android.widget.SeekBar
-import com.example.speedometer_nextgen_1.databinding.DialogVolumeControlBinding
 
 class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, EasyPermissions.RationaleCallbacks {
 
@@ -44,7 +41,6 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
 
         // Set up button and input for manual testing
         setupDebugToggle()
-
         setupVolumeControlButton()
     }
 
@@ -72,12 +68,8 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
 
 
         // Set initial status and navigation bar colors to your default background color
-        updateSystemBarsColor(
-            ContextCompat.getColor(
-                this,
-                R.color.black
-            )
-        ) // default background color
+        updateSystemBarsColor(ContextCompat.getColor(this, R.color.black))
+
     }
 
     private fun updateSystemBarsColor(color: Int) {
@@ -88,15 +80,17 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
     private fun initializeClasses() {
         speedManagement = SpeedManagement(this, binding.root)
 
-        val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        mediaPlayerPlus = MediaPlayerPlus(this, audioManager )
+        getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        mediaPlayerPlus = MediaPlayerPlus(this, volumeControlManager.getBackgroundVolume() )
 
 
         gpsGetSpeed = GPSgetSpeed(this, this)
         gpsGetSpeed.initializeLocationServices()
 
         // Initialize VolumeControlManager with mediaPlayerPlus
-        volumeControlManager = VolumeControlManager(this, mediaPlayerPlus)
+        // Add SharedPreferences initialization for VolumeControlManager
+        val sharedPreferences = getPreferences(Context.MODE_PRIVATE)
+        volumeControlManager = VolumeControlManager(this, mediaPlayerPlus, sharedPreferences)
     }
 
     private fun setupDebugToggle() {
