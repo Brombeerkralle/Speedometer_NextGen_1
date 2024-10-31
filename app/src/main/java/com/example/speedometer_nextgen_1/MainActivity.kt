@@ -78,19 +78,22 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
     }
 
     private fun initializeClasses() {
+
+        // Initialize SharedPreferences for volume persistence
+        val sharedPreferences = getPreferences(Context.MODE_PRIVATE)
+
+        // Initialize mediaPlayerPlus first with default volume from SharedPreferences
+        val initialVolume = sharedPreferences.getFloat("backgroundVolume", 0.01f)
+        mediaPlayerPlus = MediaPlayerPlus(this, initialVolume)
+
+        // Initialize volumeControlManager, which will control mediaPlayerPlus
+        volumeControlManager = VolumeControlManager(this, mediaPlayerPlus, sharedPreferences, initialVolume)
+
+
         speedManagement = SpeedManagement(this, binding.root)
-
-        getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        mediaPlayerPlus = MediaPlayerPlus(this, volumeControlManager.getBackgroundVolume() )
-
-
         gpsGetSpeed = GPSgetSpeed(this, this)
         gpsGetSpeed.initializeLocationServices()
 
-        // Initialize VolumeControlManager with mediaPlayerPlus
-        // Add SharedPreferences initialization for VolumeControlManager
-        val sharedPreferences = getPreferences(Context.MODE_PRIVATE)
-        volumeControlManager = VolumeControlManager(this, mediaPlayerPlus, sharedPreferences)
     }
 
     private fun setupDebugToggle() {

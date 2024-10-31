@@ -11,9 +11,10 @@ import com.example.speedometer_nextgen_1.databinding.DialogVolumeControlBinding
 class VolumeControlManager(
     private val context: Context,
     private val mediaPlayerPlus: MediaPlayerPlus,
-    private val sharedPreferences: SharedPreferences
+    private val sharedPreferences: SharedPreferences,
+    initialVolume: Float
 ) {
-    private var volume: Float = sharedPreferences.getFloat("backgroundVolume", 0.01f)
+    private var volume: Float = initialVolume
     private var isDialogActive = false
     private var isVolumeMaxUnlocked = false  // Renamed from isBackgroundSoundMaxUnlocked
 
