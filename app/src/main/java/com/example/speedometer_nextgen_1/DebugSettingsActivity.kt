@@ -1,6 +1,7 @@
 package com.example.speedometer_nextgen_1
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.graphics.drawable.GradientDrawable
 import android.media.AudioManager
 import android.os.Bundle
@@ -17,6 +18,7 @@ class DebugSettingsActivity : AppCompatActivity() {
     private lateinit var mediaPlayerPlus: MediaPlayerPlus  // Initialize with volume settings as needed
     private lateinit var volumeControlManager: VolumeControlManager
     private lateinit var mainActivity: MainActivity
+    private lateinit var sharedPreferences: SharedPreferences
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityDebugSettingsBinding.inflate(layoutInflater)
@@ -25,7 +27,7 @@ class DebugSettingsActivity : AppCompatActivity() {
         setupMenuControls()
 
         // Use the shared instance of SharedPreferences
-        val sharedPreferences = SharedPrefsManager.getPreferences()
+        sharedPreferences = SharedPrefsManager.getPreferences()
         val initialVolume = sharedPreferences.getFloat("backgroundVolume", 0.01f)
         mediaPlayerPlus = MediaPlayerPlus(this, initialVolume)
 
