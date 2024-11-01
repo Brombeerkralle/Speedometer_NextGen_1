@@ -4,5 +4,6 @@
     <item
         android:id="@+id/action_debug_settings"
         android:title="Debug Settings"
+        android:orderInCategory="100"
         app:showAsAction="never" />
 </menu>

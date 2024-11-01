@@ -34,7 +34,7 @@ class GPSgetSpeed(private val context: Activity, private val mainActivity: MainA
     }
 
     // Ask for location permissions from the user
-    fun askForLocationPermission() {
+    private fun askForLocationPermission() {
         if (!hasLocationPermission()) {
             EasyPermissions.requestPermissions(
                 context,  // Activity context is passed here
@@ -52,6 +52,7 @@ class GPSgetSpeed(private val context: Activity, private val mainActivity: MainA
 
     // Initialize location services
     fun initializeLocationServices() {
+        askForLocationPermission()
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
         createLocationRequest()
 

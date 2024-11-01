@@ -22,6 +22,7 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.CheckBox
 import android.widget.LinearLayout
+import android.widget.PopupMenu
 
 class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, EasyPermissions.RationaleCallbacks {
 
@@ -37,16 +38,27 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(R.layout.activity_main)
+        setContentView(binding.root)
 
         // Initialize layout, location services, and color definitions
         initializeLayout()
         initializeClasses()
 
+        // Button to open the menu
+        val menuButton = findViewById<Button>(R.id.menuButton)
+        menuButton.setOnClickListener {
+            // Trigger the menu item click programmatically
+            val popupMenu = PopupMenu(this, menuButton)
+            popupMenu.menuInflater.inflate(R.menu.main_menu, popupMenu.menu)
+            popupMenu.setOnMenuItemClickListener { item ->
+                onOptionsItemSelected(item)
+            }
+            popupMenu.show()
+        }
 
-        // Set up button and input for manual testing
-        debugSettingsActivity.setupVolumeControlButton()
     }
+
+
 
     // Function to initialize layout components, colors, and window insets
     private fun initializeLayout() {
@@ -82,21 +94,19 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
     }
 
     private fun initializeClasses() {
+        // Initialize SharedPrefsManager
+        SharedPrefsManager.init(this)
 
-        // Initialize SharedPreferences for volume persistence
-        val sharedPreferences = getPreferences(Context.MODE_PRIVATE)
-
-        // Initialize mediaPlayerPlus first with default volume from SharedPreferences
+        // Use the shared instance of SharedPreferences
+        val sharedPreferences = SharedPrefsManager.getPreferences()
         val initialVolume = sharedPreferences.getFloat("backgroundVolume", 0.01f)
         mediaPlayerPlus = MediaPlayerPlus(this, initialVolume)
-
         // Initialize volumeControlManager, which will control mediaPlayerPlus
         volumeControlManager = VolumeControlManager(this, mediaPlayerPlus, sharedPreferences, initialVolume)
-
-
         speedManagement = SpeedManagement(this, binding.root)
         gpsGetSpeed = GPSgetSpeed(this, this)
         gpsGetSpeed.initializeLocationServices()
+
 
         debugSettingsActivity = DebugSettingsActivity()
     }
@@ -138,10 +148,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
             speedManagement.updateBackgroundColor(speed)
             speedManagement.previousSpeed = speed
         }
-        debugSettingsActivity.audioPlayerActive()
     }
-
-    // Function to check if music or other audio is playing and update the indicator light accordingly
 
 
 

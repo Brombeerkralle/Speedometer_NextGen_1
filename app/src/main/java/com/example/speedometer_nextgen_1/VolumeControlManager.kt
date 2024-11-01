@@ -4,6 +4,7 @@ package com.example.speedometer_nextgen_1
 import android.app.AlertDialog
 import android.content.Context
 import android.content.SharedPreferences
+import android.view.LayoutInflater
 import android.view.WindowManager
 import android.widget.SeekBar
 import com.example.speedometer_nextgen_1.databinding.DialogVolumeControlBinding
@@ -22,7 +23,8 @@ class VolumeControlManager(
 
     // Show the volume control dialog
     fun showVolumeControlDialog() {
-        val dialogBinding = DialogVolumeControlBinding.inflate((context as MainActivity).layoutInflater)
+        val dialogBinding = DialogVolumeControlBinding.inflate(LayoutInflater.from(context))  // Updated to use LayoutInflater.from(context)
+
         val dialog = AlertDialog.Builder(context)
             .setTitle("Volume Control")
             .setView(dialogBinding.root)

@@ -97,5 +97,10 @@
         android:textColor="#FFFFFF"
         android:textSize="140sp" />
 
+    <Button
+        android:id="@+id/menuButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Menu" />
 
 </LinearLayout>

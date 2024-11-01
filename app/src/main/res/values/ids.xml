@@ -5,7 +5,10 @@
     <item name="kmhTextView" type="id" />
     <item name="textClock" type="id" />
     <item name="speedInput" type="id" />
-    <item name="playMusicButton" type="id" />
+    <item name="mockGPSinsertButton" type="id" />
     <item name="main" type="id" />
     <item name="debugControlsLayout" type="id" />
+    <item name="volumeButton" type="id" />
+    <item name="menuControlButton" type="id" />
+    <item name="playMusicButton" type="id" />
 </resources>
