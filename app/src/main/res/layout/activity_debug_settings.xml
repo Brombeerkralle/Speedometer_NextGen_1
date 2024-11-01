@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- Speed Input and Play Music Button -->
+    <EditText
+        android:id="@+id/speedInput"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:hint="Enter Speed" />
+
+    <Button
+        android:id="@+id/playMusicButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Play Music" />
+
+    <!-- Indicator Light -->
+    <View
+        android:id="@+id/indicatorLight"
+        android:layout_width="10dp"
+        android:layout_height="10dp"
+        android:background="@drawable/circle_shape" />
+
+    <!-- Volume Control Button -->
+    <Button
+        android:id="@+id/volumeControlButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Volume Control" />
+</LinearLayout>
