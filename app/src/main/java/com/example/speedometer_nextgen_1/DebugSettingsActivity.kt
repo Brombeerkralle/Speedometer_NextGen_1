@@ -19,7 +19,19 @@ class DebugSettingsActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityDebugSettingsBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        setContentView(R.layout.dialog_volume_control)
+
+        val sharedPreferences = getPreferences(Context.MODE_PRIVATE)
+        val initialVolume = sharedPreferences.getFloat("backgroundVolume", 0.01f)
+
+        // Initialize mediaPlayerPlus first
+        mediaPlayerPlus = MediaPlayerPlus(this, initialVolume)
+
+        // Then initialize volumeControlManager with the initialized mediaPlayerPlus
+        volumeControlManager = VolumeControlManager(this, mediaPlayerPlus, sharedPreferences, initialVolume)
+
+        // Show the volume control dialog
+        volumeControlManager.showVolumeControlDialog()
 
         // Handle speed input and play music
         binding.playMusicButton.setOnClickListener {
@@ -40,12 +52,7 @@ class DebugSettingsActivity : AppCompatActivity() {
         // Volume control setup
         binding.volumeControlButton.setOnClickListener {
             // Call the volume control dialog from VolumeControlManager
-            val sharedPreferences = getPreferences(Context.MODE_PRIVATE)
-
-            // Initialize mediaPlayerPlus first with default volume from SharedPreferences
-            val initialVolume = sharedPreferences.getFloat("backgroundVolume", 0.01f)
-            val volumeControlManager = VolumeControlManager(this, mediaPlayerPlus,sharedPreferences,initialVolume)
-            volumeControlManager.showVolumeControlDialog()
+             volumeControlManager.showVolumeControlDialog()
         }
 
         // Update indicator light based on media player state
