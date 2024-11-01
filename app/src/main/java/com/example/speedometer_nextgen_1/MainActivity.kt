@@ -1,6 +1,7 @@
 package com.example.speedometer_nextgen_1
 
 
+import android.content.BroadcastReceiver
 import android.os.Bundle
 import android.view.WindowManager
 import android.widget.Button
@@ -16,6 +17,7 @@ import pub.devrel.easypermissions.EasyPermissions
 import android.media.AudioManager
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.drawable.GradientDrawable
 import android.view.Menu
 import android.view.MenuItem
@@ -23,6 +25,7 @@ import android.view.View
 import android.widget.CheckBox
 import android.widget.LinearLayout
 import android.widget.PopupMenu
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 
 class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, EasyPermissions.RationaleCallbacks {
 
@@ -30,7 +33,6 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
     private lateinit var binding: ActivityMainBinding
     private lateinit var speedManagement: SpeedManagement
     private lateinit var mediaPlayerPlus: MediaPlayerPlus
-    private lateinit var gpsGetSpeed: GPSgetSpeed
     private lateinit var volumeControlManager: VolumeControlManager  // New manager
     private lateinit var debugSettingsActivity: DebugSettingsActivity
 
@@ -104,13 +106,27 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
         // Initialize volumeControlManager, which will control mediaPlayerPlus
         volumeControlManager = VolumeControlManager(this, mediaPlayerPlus, sharedPreferences, initialVolume)
         speedManagement = SpeedManagement(this, binding.root)
-        gpsGetSpeed = GPSgetSpeed(this, this)
-        gpsGetSpeed.initializeLocationServices()
-
 
         debugSettingsActivity = DebugSettingsActivity()
+
+
+        // Start LocationService
+        val locationServiceIntent = Intent(this, LocationService::class.java)
+        ContextCompat.startForegroundService(this, locationServiceIntent)
+
+        // Register the broadcast receiver to receive updates from the service
+        LocalBroadcastManager.getInstance(this).registerReceiver(locationUpdateReceiver,
+            IntentFilter("LocationUpdate")
+        )
     }
 
+    private val locationUpdateReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            val speed = intent?.getIntExtra("speed", 0) ?: 0
+            val speedDecimal = intent?.getStringExtra("speedDecimal") ?: "*"
+            callSpeedIndicators(speed, speedDecimal)
+        }
+    }
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.main_menu, menu)
         return true
@@ -158,24 +174,33 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
         EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this)
     }
     override fun onPermissionsDenied(requestCode: Int, perms: MutableList<String>) {
-        gpsGetSpeed.onPermissionsDenied(perms)
+        //gpsGetSpeed.onPermissionsDenied(perms)
     }
     override fun onPermissionsGranted(requestCode: Int, perms: MutableList<String>) {
-        gpsGetSpeed.startLocationUpdates()
+        //gpsGetSpeed.startLocationUpdates()
     }
     override fun onResume() {
         super.onResume()
-        gpsGetSpeed.startLocationUpdates()
+        //gpsGetSpeed.startLocationUpdates()
         mediaPlayerPlus.playSilentAudio()
         Toast.makeText(this, "Resumeeeeeeeeeeeee", Toast.LENGTH_SHORT).show()
     }
 
     override fun onPause() {
         super.onPause()
-        gpsGetSpeed.stopLocationUpdates()
+       // gpsGetSpeed.stopLocationUpdates()
         mediaPlayerPlus.release()
         mediaPlayerPlus.releaseBackgroundPlayer()
         Toast.makeText(this, "Pause", Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // Stop LocationService
+        val locationServiceIntent = Intent(this, LocationService::class.java)
+        stopService(locationServiceIntent)
+        // Unregister the receiver
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(locationUpdateReceiver)
     }
     override fun onRationaleAccepted(requestCode: Int) {}
     override fun onRationaleDenied(requestCode: Int) {}
