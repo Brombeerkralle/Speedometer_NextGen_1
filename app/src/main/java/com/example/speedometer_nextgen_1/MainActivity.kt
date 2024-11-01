@@ -15,7 +15,10 @@ import com.example.speedometer_nextgen_1.databinding.ActivityMainBinding
 import pub.devrel.easypermissions.EasyPermissions
 import android.media.AudioManager
 import android.content.Context
+import android.content.Intent
 import android.graphics.drawable.GradientDrawable
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.widget.CheckBox
 import android.widget.LinearLayout
@@ -28,6 +31,8 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
     private lateinit var mediaPlayerPlus: MediaPlayerPlus
     private lateinit var gpsGetSpeed: GPSgetSpeed
     private lateinit var volumeControlManager: VolumeControlManager  // New manager
+    private lateinit var debugSettingsActivity: DebugSettingsActivity
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,8 +45,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
 
 
         // Set up button and input for manual testing
-        setupDebugToggle()
-        setupVolumeControlButton()
+        debugSettingsActivity.setupVolumeControlButton()
     }
 
     // Function to initialize layout components, colors, and window insets
@@ -94,41 +98,28 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
         gpsGetSpeed = GPSgetSpeed(this, this)
         gpsGetSpeed.initializeLocationServices()
 
+        debugSettingsActivity = DebugSettingsActivity()
     }
 
-    private fun setupDebugToggle() {
-        val debugToggleCheckbox = findViewById<CheckBox>(R.id.debugToggleCheckbox)
-        val debugControlsLayout = findViewById<LinearLayout>(R.id.debugControlsLayout)
-
-        debugToggleCheckbox.setOnCheckedChangeListener { _, isChecked ->
-            // Show debug controls if the checkbox is checked, hide otherwise
-            debugControlsLayout.visibility = if (isChecked) View.VISIBLE else View.GONE
-        }
-
-        // Retain the existing debug button setup within the debug controls layout
-        setupDebugButton()
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.main_menu, menu)
+        return true
     }
 
-    // Set up the button for manual debugging and testing
-    private fun setupDebugButton() {
-        val speedInput = findViewById<EditText>(R.id.speedInput)
-        val playMusicButton = findViewById<Button>(R.id.playMusicButton)
-
-        playMusicButton.setOnClickListener {
-            val speedText = speedInput.text.toString()
-            if (speedText.isNotEmpty()) {
-                val speedValue = speedText.toIntOrNull()
-                if (speedValue != null) {
-                    // Manually call speed indicators for debugging purposes
-                    callSpeedIndicators(speedValue, "*")
-                } else {
-                    Toast.makeText(this, "Please enter a valid speed", Toast.LENGTH_SHORT).show()
-                }
-            } else {
-                Toast.makeText(this, "Speed input cannot be empty", Toast.LENGTH_SHORT).show()
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_debug_settings -> {
+                // Start DebugSettingsActivity when the menu item is clicked
+                val intent = Intent(this, DebugSettingsActivity::class.java)
+                startActivity(intent)
+                true
             }
+            else -> super.onOptionsItemSelected(item)
         }
     }
+
+
+
 
 
     // Function that handles speed changes and calls background color change or music playback
@@ -147,40 +138,13 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
             speedManagement.updateBackgroundColor(speed)
             speedManagement.previousSpeed = speed
         }
-        audioPlayerActive()
+        debugSettingsActivity.audioPlayerActive()
     }
 
     // Function to check if music or other audio is playing and update the indicator light accordingly
-    private fun audioPlayerActive() {
-        val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        val isMusicPlaying = audioManager.isMusicActive
 
-        // Get the indicator view
-        val indicatorLight = binding.indicatorLight
 
-        // Get the background as a GradientDrawable (to maintain circle shape)
-        val background = indicatorLight.background as GradientDrawable
 
-        // Change the color based on whether music is playing
-        if (isMusicPlaying) {
-            // Set the indicator light to red when music is playing
-            background.setColor(ContextCompat.getColor(this, R.color.red))
-        } else {
-            // Set the indicator light to green when no music is playing
-            background.setColor(ContextCompat.getColor(this, R.color.green))
-
-            // Restart silent audio if no music is playing
-            mediaPlayerPlus.playSilentAudio() // Ensure silent audio keeps running
-        }
-    }
-
-    private fun setupVolumeControlButton() {
-        val volumeButton = findViewById<Button>(R.id.volumeControlButton)
-
-        volumeButton.setOnClickListener {
-            volumeControlManager.showVolumeControlDialog()
-        }
-    }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
