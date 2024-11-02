@@ -43,7 +43,7 @@ class VolumeControlManager(
                 }
 
                 // Update volume based on SeekBar's progress (scale 0-100)
-                volume = dialogBinding.volumeSeekBar.progress / 100.0f
+                volume = progress  / 100.0f
                 mediaPlayerPlus.updateBackgroundVolume(volume)
             }
 

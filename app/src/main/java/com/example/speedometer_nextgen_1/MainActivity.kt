@@ -19,6 +19,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.drawable.GradientDrawable
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -114,19 +115,22 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
         val locationServiceIntent = Intent(this, LocationService::class.java)
         ContextCompat.startForegroundService(this, locationServiceIntent)
 
-        // Register the broadcast receiver to receive updates from the service
-        LocalBroadcastManager.getInstance(this).registerReceiver(locationUpdateReceiver,
-            IntentFilter("LocationUpdate")
-        )
+
     }
 
     private val locationUpdateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             val speed = intent?.getIntExtra("speed", 0) ?: 0
             val speedDecimal = intent?.getStringExtra("speedDecimal") ?: "*"
-            callSpeedIndicators(speed, speedDecimal)
+            Log.d("MainActivity", "Broadcast received: speed=$speed, decimal=$speedDecimal")
+
+            // Update the UI on the main thread
+            runOnUiThread {
+                callSpeedIndicators(speed, speedDecimal)
+            }
         }
     }
+
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.main_menu, menu)
         return true
@@ -164,6 +168,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
             speedManagement.updateBackgroundColor(speed)
             speedManagement.previousSpeed = speed
         }
+        Toast.makeText(this, "I am Speed", Toast.LENGTH_SHORT).show()
     }
 
 
@@ -182,15 +187,24 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
     override fun onResume() {
         super.onResume()
         //gpsGetSpeed.startLocationUpdates()
-        mediaPlayerPlus.playSilentAudio()
+        //mediaPlayerPlus.playSilentAudio()
+        val filter = IntentFilter("com.example.speedometer_nextgen_1.LOCATION_UPDATE")
+        ContextCompat.registerReceiver(
+            this,
+            locationUpdateReceiver,
+            filter,
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
+        Log.d("MainActivity", "Receiver registered in onResume")
         Toast.makeText(this, "Resumeeeeeeeeeeeee", Toast.LENGTH_SHORT).show()
     }
 
     override fun onPause() {
         super.onPause()
        // gpsGetSpeed.stopLocationUpdates()
-        mediaPlayerPlus.release()
-        mediaPlayerPlus.releaseBackgroundPlayer()
+       // mediaPlayerPlus.release()
+       // mediaPlayerPlus.releaseBackgroundPlayer()
+
         Toast.makeText(this, "Pause", Toast.LENGTH_SHORT).show()
     }
 
@@ -200,7 +214,12 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
         val locationServiceIntent = Intent(this, LocationService::class.java)
         stopService(locationServiceIntent)
         // Unregister the receiver
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(locationUpdateReceiver)
+
+        unregisterReceiver(locationUpdateReceiver)
+        Log.d("MainActivity", "Receiver unregistered in onPause")
+
+        mediaPlayerPlus.release()
+        mediaPlayerPlus.releaseBackgroundPlayer()
     }
     override fun onRationaleAccepted(requestCode: Int) {}
     override fun onRationaleDenied(requestCode: Int) {}
