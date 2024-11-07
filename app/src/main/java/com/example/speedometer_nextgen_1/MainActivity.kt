@@ -97,25 +97,29 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
     }
 
     private fun initializeClasses() {
-        // Initialize SharedPrefsManager
-        SharedPrefsManager.init(this)
+        /**
+         * 1. Initialization Order in MainActivity
+         *
+         * Since some classes depend on others, they need to be initialized in a specific order:
+         *
+         *     SharedPrefsManager: Initialize this first as it provides shared preferences, which other classes rely on.
+         *     MediaPlayerPlus: This class requires an initial volume level from SharedPrefsManager. Initialize it next with the retrieved volume.
+         *     VolumeControlManager: Initialize after MediaPlayerPlus since it controls the volume of MediaPlayerPlus and depends on SharedPrefsManager as well.
+         *     SpeedManagement: It can be initialized next as it does not seem to have dependencies on the other classes.
+         *     DebugSettingsActivity: This activity is generally only initialized when navigated to, so it doesn’t need to be set up immediately in MainActivity.
+         */
 
-        // Use the shared instance of SharedPreferences
+        SharedPrefsManager.init(this)
         val sharedPreferences = SharedPrefsManager.getPreferences()
         val initialVolume = sharedPreferences.getFloat("backgroundVolume", 0.01f)
         mediaPlayerPlus = MediaPlayerPlus(this, initialVolume)
-        // Initialize volumeControlManager, which will control mediaPlayerPlus
         volumeControlManager = VolumeControlManager(this, mediaPlayerPlus, sharedPreferences, initialVolume)
         speedManagement = SpeedManagement(this, binding.root)
-
         debugSettingsActivity = DebugSettingsActivity()
-
 
         // Start LocationService
         val locationServiceIntent = Intent(this, LocationService::class.java)
         ContextCompat.startForegroundService(this, locationServiceIntent)
-
-
     }
 
     private val locationUpdateReceiver = object : BroadcastReceiver() {

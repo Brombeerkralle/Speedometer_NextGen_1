@@ -16,15 +16,6 @@ class SpeedManagement(private val context: Context, private val view: View) {
     private val colorUnder80 = ContextCompat.getColor(context, R.color.blue)
     private val colorOver80 = ContextCompat.getColor(context, R.color.black)
 
-    /*// Function to determine the speed category in a single place
-    fun getSpeedCategory(speed: Int): SpeedCategory {
-        return when {
-            speed in 20..25 || speed in 40..45 || speed in 60..65 || speed in 74..76 -> SpeedCategory.SPEEDING_UP
-            speed in 26..30 || speed in 46..50 || speed in 66..70 || speed in 77..80 -> SpeedCategory.CRUISING
-            speed in 31..35 || speed in 50..54 || speed in 70..74 || speed in 80..84 -> SpeedCategory.SLOWING_DOWN
-            else -> SpeedCategory.UNKNOWN
-        }
-    }*/
 
     // Multiple ideal cruise speeds
     private val idealCruiseSpeeds = listOf(30, 50, 70, 80)  // Define multiple ideal cruise speeds here
