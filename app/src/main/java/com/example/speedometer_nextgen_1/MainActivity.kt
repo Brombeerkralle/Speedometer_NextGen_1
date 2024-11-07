@@ -193,7 +193,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
             this,
             locationUpdateReceiver,
             filter,
-            ContextCompat.RECEIVER_NOT_EXPORTED
+            ContextCompat.RECEIVER_EXPORTED
         )
         Log.d("MainActivity", "Receiver registered in onResume")
         Toast.makeText(this, "Resumeeeeeeeeeeeee", Toast.LENGTH_SHORT).show()
