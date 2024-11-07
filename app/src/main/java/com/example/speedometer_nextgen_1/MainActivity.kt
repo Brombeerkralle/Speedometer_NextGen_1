@@ -18,6 +18,7 @@ import android.media.AudioManager
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.SharedPreferences
 import android.graphics.drawable.GradientDrawable
 import android.util.Log
 import android.view.Menu
@@ -27,30 +28,28 @@ import android.widget.CheckBox
 import android.widget.LinearLayout
 import android.widget.PopupMenu
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import javax.inject.Inject
 
 class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, EasyPermissions.RationaleCallbacks {
 
-
     private lateinit var binding: ActivityMainBinding
-    private lateinit var speedManagement: SpeedManagement
-    private lateinit var mediaPlayerPlus: MediaPlayerPlus
-    private lateinit var volumeControlManager: VolumeControlManager  // New manager
-    private lateinit var debugSettingsActivity: DebugSettingsActivity
 
+    @Inject lateinit var sharedPreferences: SharedPreferences
+    @Inject lateinit var mediaPlayerPlus: MediaPlayerPlus
+    @Inject lateinit var volumeControlManager: VolumeControlManager
+    @Inject lateinit var speedManagement: SpeedManagement
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Initialize layout, location services, and color definitions
+        // Initialize layout components
         initializeLayout()
-        initializeClasses()
 
         // Button to open the menu
         val menuButton = findViewById<Button>(R.id.menuButton)
         menuButton.setOnClickListener {
-            // Trigger the menu item click programmatically
             val popupMenu = PopupMenu(this, menuButton)
             popupMenu.menuInflater.inflate(R.menu.main_menu, popupMenu.menu)
             popupMenu.setOnMenuItemClickListener { item ->
@@ -59,6 +58,9 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
             popupMenu.show()
         }
 
+        // Start LocationService
+        val locationServiceIntent = Intent(this, LocationService::class.java)
+        ContextCompat.startForegroundService(this, locationServiceIntent)
     }
 
 
@@ -67,10 +69,8 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
     private fun initializeLayout() {
         // Prevent the screen from turning off
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-
         // Make the status bar and navigation bar transparent and enable edge-to-edge content
         WindowCompat.setDecorFitsSystemWindows(window, false)
-
         // Set edge-to-edge UI and window insets handling
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, insets ->
             // Retrieve the insets for system bars (status bar, navigation bar, etc.)
@@ -84,11 +84,8 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
             )
             insets
         }
-
-
         // Set initial status and navigation bar colors to your default background color
         updateSystemBarsColor(ContextCompat.getColor(this, R.color.black))
-
     }
 
     private fun updateSystemBarsColor(color: Int) {
@@ -96,31 +93,6 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
         window.navigationBarColor = color
     }
 
-    private fun initializeClasses() {
-        /**
-         * 1. Initialization Order in MainActivity
-         *
-         * Since some classes depend on others, they need to be initialized in a specific order:
-         *
-         *     SharedPrefsManager: Initialize this first as it provides shared preferences, which other classes rely on.
-         *     MediaPlayerPlus: This class requires an initial volume level from SharedPrefsManager. Initialize it next with the retrieved volume.
-         *     VolumeControlManager: Initialize after MediaPlayerPlus since it controls the volume of MediaPlayerPlus and depends on SharedPrefsManager as well.
-         *     SpeedManagement: It can be initialized next as it does not seem to have dependencies on the other classes.
-         *     DebugSettingsActivity: This activity is generally only initialized when navigated to, so it doesn’t need to be set up immediately in MainActivity.
-         */
-
-        SharedPrefsManager.init(this)
-        val sharedPreferences = SharedPrefsManager.getPreferences()
-        val initialVolume = sharedPreferences.getFloat("backgroundVolume", 0.01f)
-        mediaPlayerPlus = MediaPlayerPlus(this, initialVolume)
-        volumeControlManager = VolumeControlManager(this, mediaPlayerPlus, sharedPreferences, initialVolume)
-        speedManagement = SpeedManagement(this, binding.root)
-        debugSettingsActivity = DebugSettingsActivity()
-
-        // Start LocationService
-        val locationServiceIntent = Intent(this, LocationService::class.java)
-        ContextCompat.startForegroundService(this, locationServiceIntent)
-    }
 
     private val locationUpdateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -152,10 +124,6 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
         }
     }
 
-
-
-
-
     // Function that handles speed changes and calls background color change or music playback
     fun callSpeedIndicators(speed: Int, speedAsDecimal: String) {
         binding.currentSpeedId.text = speed.toString()
@@ -172,7 +140,6 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
             speedManagement.updateBackgroundColor(speed)
             speedManagement.previousSpeed = speed
         }
-        Toast.makeText(this, "I am Speed", Toast.LENGTH_SHORT).show()
     }
 
 
@@ -184,14 +151,14 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
     }
     override fun onPermissionsDenied(requestCode: Int, perms: MutableList<String>) {
         //gpsGetSpeed.onPermissionsDenied(perms)
+        Toast.makeText(this, "onPermissionsDenied", Toast.LENGTH_SHORT).show()
     }
     override fun onPermissionsGranted(requestCode: Int, perms: MutableList<String>) {
         //gpsGetSpeed.startLocationUpdates()
+        Toast.makeText(this, "onPermissionsGranted", Toast.LENGTH_SHORT).show()
     }
     override fun onResume() {
         super.onResume()
-        //gpsGetSpeed.startLocationUpdates()
-        //mediaPlayerPlus.playSilentAudio()
         val filter = IntentFilter("com.example.speedometer_nextgen_1.LOCATION_UPDATE")
         ContextCompat.registerReceiver(
             this,
@@ -200,22 +167,19 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
             ContextCompat.RECEIVER_EXPORTED
         )
         Log.d("MainActivity", "Receiver registered in onResume")
-        Toast.makeText(this, "Resumeeeeeeeeeeeee", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "onResume", Toast.LENGTH_SHORT).show()
     }
 
     override fun onPause() {
         super.onPause()
-       // gpsGetSpeed.stopLocationUpdates()
-       // mediaPlayerPlus.release()
-       // mediaPlayerPlus.releaseBackgroundPlayer()
-
-        Toast.makeText(this, "Pause", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "onPause", Toast.LENGTH_SHORT).show()
     }
 
     override fun onStop() {
         super.onStop()
         unregisterReceiver(locationUpdateReceiver)
         Log.d("MainActivity", "Receiver unregistered in onStop")
+        Toast.makeText(this, "onStop", Toast.LENGTH_SHORT).show()
     }
 
     override fun onDestroy() {
@@ -223,12 +187,10 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
         // Stop LocationService
         val locationServiceIntent = Intent(this, LocationService::class.java)
         stopService(locationServiceIntent)
-        // Unregister the receiver
-
-
 
         mediaPlayerPlus.release()
         mediaPlayerPlus.releaseBackgroundPlayer()
+        Toast.makeText(this, "onDestroy", Toast.LENGTH_SHORT).show()
     }
     override fun onRationaleAccepted(requestCode: Int) {}
     override fun onRationaleDenied(requestCode: Int) {}

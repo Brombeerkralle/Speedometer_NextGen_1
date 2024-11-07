@@ -2,9 +2,9 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
     id("com.github.ben-manes.versions") version "0.46.0"
-    id("org.jetbrains.kotlin.kapt")         // KAPT for annotation processing in Kotlin
     id("dagger.hilt.android.plugin")        // Hilt plugin for Dependency Injection
-    id("com.google.dagger.hilt.android")    // Apply the Hilt plugin
+    //id("com.google.dagger.hilt.android")    // Apply the Hilt plugin
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -56,11 +56,11 @@ dependencies {
     implementation(libs.androidx.junit.ktx)
 
     implementation(libs.hilt.android)
-    kapt(libs.hilt.android.compiler)
+    ksp(libs.hilt.android.compiler)
 
     // Optional - Hilt testing dependencies
     androidTestImplementation(libs.hilt.android.testing)
-    kaptAndroidTest(libs.hilt.android.compiler)
+    kspAndroidTest(libs.hilt.android.compiler)
     testImplementation(libs.hilt.android.testing)
-    kaptTest(libs.hilt.android.compiler)
+    kspTest(libs.hilt.android.compiler)
 }
