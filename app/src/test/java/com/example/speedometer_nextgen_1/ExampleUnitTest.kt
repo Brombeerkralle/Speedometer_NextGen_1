@@ -25,12 +25,7 @@ import java.util.concurrent.TimeUnit
  *
  * See [testing documentation](http://d.android.com/tools/testing).
  */
-class ExampleUnitTest {
-    @Test
-    fun addition_isCorrect() {
-        assertEquals(4, 2 + 2)
-    }
-}
+
 
 
 @RunWith(AndroidJUnit4::class)
