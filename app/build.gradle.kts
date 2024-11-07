@@ -51,14 +51,4 @@ dependencies {
     implementation(libs.easypermissions)
     implementation(libs.play.services.location)
     implementation(libs.androidx.junit.ktx)
-
-    // AndroidX Testing - JUnit4 test runner and Core Testing Library
-    androidTestImplementation(libs.androidx.junit.v115)
-    androidTestImplementation(libs.androidx.runner)
-    androidTestImplementation(libs.core.ktx.v150)
-    androidTestImplementation(libs.androidx.espresso.core.v351)
-
-    testImplementation(libs.junit)
-    testImplementation(libs.junit.v115)
-
 }
