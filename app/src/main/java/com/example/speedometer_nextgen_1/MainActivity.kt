@@ -208,6 +208,12 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
         Toast.makeText(this, "Pause", Toast.LENGTH_SHORT).show()
     }
 
+    override fun onStop() {
+        super.onStop()
+        unregisterReceiver(locationUpdateReceiver)
+        Log.d("MainActivity", "Receiver unregistered in onStop")
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         // Stop LocationService
@@ -215,8 +221,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
         stopService(locationServiceIntent)
         // Unregister the receiver
 
-        unregisterReceiver(locationUpdateReceiver)
-        Log.d("MainActivity", "Receiver unregistered in onPause")
+
 
         mediaPlayerPlus.release()
         mediaPlayerPlus.releaseBackgroundPlayer()

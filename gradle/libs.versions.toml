@@ -1,26 +1,41 @@
 [versions]
-agp = "8.4.2"
-kotlin = "1.9.0"
-coreKtx = "1.13.1"
-junit = "4.13.2"
-junitVersion = "1.2.1"
-espressoCore = "3.6.1"
-appcompat = "1.7.0"
-material = "1.12.0"
-coreKtxVersion = "1.13.1"
-activity = "1.9.2"
-constraintlayout = "2.1.4"
-easypermissions = "3.0.0"
-playServicesLocation = "21.3.0"
-androidxActivityKtx = "1.9.2"
-foundationAndroid = "1.7.4"
+agp = "8.7.2"                     # Android Gradle Plugin
+androidxCoreKtxVersion = "1.10.1" # Latest stable core-ktx
+androidxJunit = "1.2.1"           # AndroidX JUnit version
+androidxJunitVersion = "1.1.5"
+androidxTestCoreKtx = "1.5.0"
+espressoCoreVersion = "3.6.1"     # Espresso core version
+kotlin = "1.9.10"                 # Latest stable Kotlin version
+coreKtx = "1.12.0"                # Latest stable core-ktx, used in core-ktx implementation
+junit = "4.13.2"                  # JUnit version for standard tests
+junitVersion = "1.2.1"            # AndroidX JUnit KTX version
+espressoCore = "3.6.1"            # Espresso core update
+appcompat = "1.7.0"               # Latest stable AppCompat
+material = "1.12.0"               # Updated Material Components
+coreKtxVersion = "1.15.0"         # Latest core-ktx used elsewhere
+activity = "1.9.3"                # Latest stable Activity KTX
+constraintlayout = "2.2.0"        # Latest stable ConstraintLayout
+easypermissions = "3.0.0"         # EasyPermissions library
+playServicesLocation = "21.3.0"   # Updated Play Services Location
+androidxActivityKtx = "1.9.3"     # Latest stable androidx-activity-ktx
+foundationAndroid = "1.7.5"       # Foundation library version for compatibility
+androidxCoreKtx = "1.12.0"        # Stable core-ktx compatibility version
+monitor = "1.7.2"                 # Stable monitor version
+junitKtx = "1.2.1"                # Stable JUnit KTX version
+runner = "1.6.2"                  # AndroidX Test Runner version
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-core-ktx-v150 = { module = "androidx.test:core-ktx", version.ref = "androidxCoreKtxVersion" }
+androidx-espresso-core-v351 = { module = "androidx.test.espresso:espresso-core", version.ref = "espressoCoreVersion" }
+androidx-junit-v115 = { module = "androidx.test.ext:junit", version.ref = "androidxJunit" }
+androidx-runner = { module = "androidx.test:runner", version.ref = "runner" }
+core-ktx-v150 = { module = "androidx.test:core-ktx", version.ref = "androidxTestCoreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+junit-v115 = { module = "androidx.test.ext:junit", version.ref = "androidxJunitVersion" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-core-ktx-v190 = { module = "androidx.core:core-ktx", version.ref = "coreKtxVersion" }
 androidx-activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
@@ -29,8 +44,10 @@ easypermissions = { group = "pub.devrel", name = "easypermissions", version.ref 
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 androidx-activity-ktx = { group = "androidx.activity", name = "activity-ktx", version.ref = "androidxActivityKtx" }
 androidx-foundation-android = { group = "androidx.compose.foundation", name = "foundation-android", version.ref = "foundationAndroid" }
+core-ktx = { group = "androidx.test", name = "core-ktx", version.ref = "androidxCoreKtx" }
+androidx-monitor = { group = "androidx.test", name = "monitor", version.ref = "monitor" }
+androidx-junit-ktx = { group = "androidx.test.ext", name = "junit-ktx", version.ref = "junitKtx" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
-

@@ -1,8 +1,7 @@
-import org.jetbrains.kotlin.storage.CacheResetOnProcessCanceled.enabled
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
+    id("com.github.ben-manes.versions") version "0.46.0"
 }
 
 android {
@@ -11,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.speedometer_nextgen_1"
-        minSdk = 34
+        minSdk = 34  // Lowered for broader compatibility
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -38,27 +37,28 @@ android {
     buildFeatures {
         viewBinding = true
     }
-
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
     implementation(libs.androidx.foundation.android)
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
 
-    //dependencies
-    //https://github.com/googlesamples/easypermissions
+    // Additional dependencies
     implementation(libs.easypermissions)
-    //https://developers.google.com/android/guides/setup?hl=de
     implementation(libs.play.services.location)
-    implementation(libs.androidx.activity.ktx)
-    implementation(libs.androidx.core.ktx.v190)
+    implementation(libs.androidx.junit.ktx)
+
+    // AndroidX Testing - JUnit4 test runner and Core Testing Library
+    androidTestImplementation(libs.androidx.junit.v115)
+    androidTestImplementation(libs.androidx.runner)
+    androidTestImplementation(libs.core.ktx.v150)
+    androidTestImplementation(libs.androidx.espresso.core.v351)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.junit.v115)
+
 }

@@ -12,7 +12,9 @@ import android.os.Looper
 import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import com.google.android.gms.location.*
+import pub.devrel.easypermissions.EasyPermissions
 import java.util.Locale
 
 class LocationService : Service() {
@@ -26,6 +28,7 @@ class LocationService : Service() {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         createLocationCallback()
         startLocationUpdates()
+
     }
 
     private fun startForegroundService() {
