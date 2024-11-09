@@ -13,7 +13,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.speedometer_nextgen_1"
-        minSdk = 34  // Lowered for broader compatibility
+        minSdk = 30  // Lowered for broader compatibility
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -58,9 +58,13 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
 
+    /*
+
     // Optional - Hilt testing dependencies
     androidTestImplementation(libs.hilt.android.testing)
     kspAndroidTest(libs.hilt.android.compiler)
     testImplementation(libs.hilt.android.testing)
     kspTest(libs.hilt.android.compiler)
+
+     */
 }

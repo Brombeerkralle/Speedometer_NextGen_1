@@ -16,6 +16,9 @@
       <SelectionState runConfigName="MainActivityBroadcastTest">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
+      <SelectionState runConfigName="Speedometer_NextGen_1">
+        <option name="selectionMode" value="DROPDOWN" />
+      </SelectionState>
     </selectionStates>
   </component>
 </project>
