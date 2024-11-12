@@ -1,9 +1,7 @@
-import org.jetbrains.kotlin.storage.CacheResetOnProcessCanceled.enabled
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
-    //id("com.github.ben-manes.versions") version "0.46.0"
+    id("com.github.ben-manes.versions") version "0.46.0"
     //id("dagger.hilt.android.plugin")        // Hilt plugin for Dependency Injection
 
     //alias(libs.plugins.ksp)
@@ -12,12 +10,12 @@ plugins {
 }
 
 android {
-    compileSdk = 34
     namespace = "com.example.speedometer_nextgen_1"
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "com.example.speedometer_nextgen_1"
-        minSdk = 30  // Lowered for broader compatibility
+        minSdk = 34  // Lowered for broader compatibility
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
