@@ -18,7 +18,6 @@ import android.media.AudioManager
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.SharedPreferences
 import android.graphics.drawable.GradientDrawable
 import android.util.Log
 import android.view.Menu
@@ -28,16 +27,15 @@ import android.widget.CheckBox
 import android.widget.LinearLayout
 import android.widget.PopupMenu
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import javax.inject.Inject
 
 class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, EasyPermissions.RationaleCallbacks {
 
     private lateinit var binding: ActivityMainBinding
+    private lateinit var speedManagement: SpeedManagement
+    private lateinit var mediaPlayerPlus: MediaPlayerPlus
+    private lateinit var volumeControlManager: VolumeControlManager  // New manager
+    private lateinit var debugSettingsActivity: DebugSettingsActivity
 
-    @Inject lateinit var sharedPreferences: SharedPreferences
-    @Inject lateinit var mediaPlayerPlus: MediaPlayerPlus
-    @Inject lateinit var volumeControlManager: VolumeControlManager
-    @Inject lateinit var speedManagement: SpeedManagement
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,6 +44,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
 
         // Initialize layout components
         initializeLayout()
+        initializeClasses()
 
         // Button to open the menu
         val menuButton = findViewById<Button>(R.id.menuButton)
@@ -58,9 +57,6 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
             popupMenu.show()
         }
 
-        // Start LocationService
-        val locationServiceIntent = Intent(this, LocationService::class.java)
-        ContextCompat.startForegroundService(this, locationServiceIntent)
     }
 
 
@@ -69,8 +65,10 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
     private fun initializeLayout() {
         // Prevent the screen from turning off
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
         // Make the status bar and navigation bar transparent and enable edge-to-edge content
         WindowCompat.setDecorFitsSystemWindows(window, false)
+
         // Set edge-to-edge UI and window insets handling
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, insets ->
             // Retrieve the insets for system bars (status bar, navigation bar, etc.)
@@ -93,6 +91,27 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
         window.navigationBarColor = color
     }
 
+    private fun initializeClasses() {
+        // Initialize SharedPrefsManager
+        SharedPrefsManager.init(this)
+
+        // Use the shared instance of SharedPreferences
+        val sharedPreferences = SharedPrefsManager.getPreferences()
+        val initialVolume = sharedPreferences.getFloat("backgroundVolume", 0.01f)
+        mediaPlayerPlus = MediaPlayerPlus(this, initialVolume)
+        // Initialize volumeControlManager, which will control mediaPlayerPlus
+        volumeControlManager = VolumeControlManager(this, mediaPlayerPlus, sharedPreferences, initialVolume)
+        speedManagement = SpeedManagement(this, binding.root)
+
+        debugSettingsActivity = DebugSettingsActivity()
+
+
+        // Start LocationService
+        val locationServiceIntent = Intent(this, LocationService::class.java)
+        ContextCompat.startForegroundService(this, locationServiceIntent)
+
+
+    }
 
     private val locationUpdateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {

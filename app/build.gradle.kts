@@ -2,11 +2,6 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
     id("com.github.ben-manes.versions") version "0.46.0"
-    //id("dagger.hilt.android.plugin")        // Hilt plugin for Dependency Injection
-
-    //alias(libs.plugins.ksp)
-
-
 }
 
 android {
@@ -56,19 +51,4 @@ dependencies {
     implementation(libs.easypermissions)
     implementation(libs.play.services.location)
     implementation(libs.androidx.junit.ktx)
-
-    //implementation(libs.hilt.android)
-    //ksp(libs.hilt.android.compiler)
-
-    //implementation("com.google.devtools.ksp:symbol-processing-api:1.8.10-1.0.9")
-
-    /*
-
-    // Optional - Hilt testing dependencies
-    androidTestImplementation(libs.hilt.android.testing)
-    kspAndroidTest(libs.hilt.android.compiler)
-    testImplementation(libs.hilt.android.testing)
-    kspTest(libs.hilt.android.compiler)
-
-     */
 }
