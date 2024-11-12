@@ -177,6 +177,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
         Toast.makeText(this, "onPermissionsGranted", Toast.LENGTH_SHORT).show()
     }
     override fun onResume() {
+        Toast.makeText(this, "onResume", Toast.LENGTH_SHORT).show()
         super.onResume()
         val filter = IntentFilter("com.example.speedometer_nextgen_1.LOCATION_UPDATE")
         ContextCompat.registerReceiver(
@@ -186,22 +187,22 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
             ContextCompat.RECEIVER_EXPORTED
         )
         Log.d("MainActivity", "Receiver registered in onResume")
-        Toast.makeText(this, "onResume", Toast.LENGTH_SHORT).show()
     }
 
     override fun onPause() {
-        super.onPause()
         Toast.makeText(this, "onPause", Toast.LENGTH_SHORT).show()
+        super.onPause()
     }
 
     override fun onStop() {
+        Toast.makeText(this, "onStop", Toast.LENGTH_SHORT).show()
         super.onStop()
         unregisterReceiver(locationUpdateReceiver)
         Log.d("MainActivity", "Receiver unregistered in onStop")
-        Toast.makeText(this, "onStop", Toast.LENGTH_SHORT).show()
     }
 
     override fun onDestroy() {
+        Toast.makeText(this, "onDestroy", Toast.LENGTH_SHORT).show()
         super.onDestroy()
         // Stop LocationService
         val locationServiceIntent = Intent(this, LocationService::class.java)
@@ -209,7 +210,6 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
 
         mediaPlayerPlus.release()
         mediaPlayerPlus.releaseBackgroundPlayer()
-        Toast.makeText(this, "onDestroy", Toast.LENGTH_SHORT).show()
     }
     override fun onRationaleAccepted(requestCode: Int) {}
     override fun onRationaleDenied(requestCode: Int) {}

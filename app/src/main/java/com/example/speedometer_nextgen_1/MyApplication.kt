@@ -1,5 +1,5 @@
-/*package com.example.speedometer_nextgen_1
-
+package com.example.speedometer_nextgen_1
+/*
 import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
