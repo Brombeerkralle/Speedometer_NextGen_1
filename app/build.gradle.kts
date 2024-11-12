@@ -1,15 +1,19 @@
+import org.jetbrains.kotlin.storage.CacheResetOnProcessCanceled.enabled
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
-    id("com.github.ben-manes.versions") version "0.46.0"
-    id("dagger.hilt.android.plugin")        // Hilt plugin for Dependency Injection
-    //id("com.google.dagger.hilt.android")    // Apply the Hilt plugin
-    alias(libs.plugins.ksp)
+    //id("com.github.ben-manes.versions") version "0.46.0"
+    //id("dagger.hilt.android.plugin")        // Hilt plugin for Dependency Injection
+
+    //alias(libs.plugins.ksp)
+
+
 }
 
 android {
-    namespace = "com.example.speedometer_nextgen_1"
     compileSdk = 34
+    namespace = "com.example.speedometer_nextgen_1"
 
     defaultConfig {
         applicationId = "com.example.speedometer_nextgen_1"
@@ -55,8 +59,10 @@ dependencies {
     implementation(libs.play.services.location)
     implementation(libs.androidx.junit.ktx)
 
-    implementation(libs.hilt.android)
-    ksp(libs.hilt.android.compiler)
+    //implementation(libs.hilt.android)
+    //ksp(libs.hilt.android.compiler)
+
+    //implementation("com.google.devtools.ksp:symbol-processing-api:1.8.10-1.0.9")
 
     /*
 
