@@ -1,8 +1,8 @@
 [versions]
 agp = "8.7.2"                     # Android Gradle Plugin
-#gradle = "8.7.2"
+gradle = "8.10.2"
 kotlin = "1.9.10"                 # Latest stable Kotlin version
-hiltAndroid = "2.44"              # Hilt version
+hiltAndroid = "2.52"              # Hilt version
 coreKtx = "1.12.0"                # Latest stable core-ktx
 appcompat = "1.7.0"               # Latest stable AppCompat
 kotlinGradlePlugin = "1.9.10"
@@ -19,7 +19,7 @@ junitKtx = "1.2.1"                # Stable JUnit KTX version
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 # Google Material Design
-#gradle = { module = "com.android.tools.build:gradle", version.ref = "gradle" }
+gradle = { module = "com.android.tools.build:gradle", version.ref = "gradle" }
 hilt-android-gradle-plugin = { module = "com.google.dagger:hilt-android-gradle-plugin", version.ref = "hiltAndroid" }
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlinGradlePlugin" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
