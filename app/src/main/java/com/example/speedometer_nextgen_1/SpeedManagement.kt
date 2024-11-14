@@ -1,11 +1,10 @@
 package com.example.speedometer_nextgen_1
 
 import android.content.Context
-import android.view.View
 import androidx.core.content.ContextCompat
 import kotlin.math.abs
 
-class SpeedManagement(private val context: Context, private val view: View) {
+class SpeedManagement(context: Context) {
 
     var previousSpeed: Int? = null
     private var previousCategory: SpeedCategory? = null
@@ -69,7 +68,7 @@ class SpeedManagement(private val context: Context, private val view: View) {
     }
 
     // Function to update the background color based on the speed
-    fun updateBackgroundColor(speed: Int) {
+    fun updateBackgroundColor(speed: Int, updateView: (Int) -> Unit) {
         val color = when {
             speed < 30 -> colorUnder30
             speed < 50 -> colorUnder50
@@ -77,7 +76,7 @@ class SpeedManagement(private val context: Context, private val view: View) {
             speed < 80 -> colorUnder80
             else -> colorOver80
         }
-        view.setBackgroundColor(color)
+        updateView(color)
     }
 }
 
