@@ -1,11 +1,8 @@
 [versions]
 agp = "8.7.2"                     # Android Gradle Plugin
-gradle = "8.10.2"
 kotlin = "1.9.10"                 # Latest stable Kotlin version
-hiltAndroid = "2.52"              # Hilt version
 coreKtx = "1.12.0"                # Latest stable core-ktx
 appcompat = "1.7.0"               # Latest stable AppCompat
-kotlinGradlePlugin = "1.9.10"
 material = "1.12.0"               # Updated Material Components
 activity = "1.9.3"                # Latest stable Activity KTX
 constraintlayout = "2.2.0"        # Latest stable ConstraintLayout
@@ -13,15 +10,13 @@ easypermissions = "3.0.0"         # EasyPermissions library
 playServicesLocation = "21.3.0"   # Updated Play Services Location
 foundationAndroid = "1.7.5"       # Foundation library version for compatibility
 junitKtx = "1.2.1"                # Stable JUnit KTX version
+#koin = "3.5.6"    # Stable Koin version for Android
 
 [libraries]
 # AndroidX Core
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 # Google Material Design
-gradle = { module = "com.android.tools.build:gradle", version.ref = "gradle" }
-hilt-android-gradle-plugin = { module = "com.google.dagger:hilt-android-gradle-plugin", version.ref = "hiltAndroid" }
-kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlinGradlePlugin" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 # Activity and UI
 androidx-activity = { group = "androidx.activity", name = "activity-ktx", version.ref = "activity" }
@@ -31,16 +26,15 @@ androidx-foundation-android = { group = "androidx.compose.foundation", name = "f
 easypermissions = { group = "pub.devrel", name = "easypermissions", version.ref = "easypermissions" }
 # Play Services Location
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
-# Hilt Dependencies
-hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hiltAndroid" }
-hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hiltAndroid" }
-hilt-android-testing = { module = "com.google.dagger:hilt-android-testing", version.ref = "hiltAndroid" }
 # Testing
 androidx-junit-ktx = { group = "androidx.test.ext", name = "junit-ktx", version.ref = "junitKtx" }
+# Koin Core and Android
+koin-core = { group = "io.insert-koin", name = "koin-core", version = "4.0.0" }
+koin-android = { group = "io.insert-koin", name = "koin-android", version = "4.0.0" }
+#koin-androidx-scope = { group = "io.insert-koin", name = "koin-androidx-scope", version = "2.2.3" }
+#koin-androidx-viewmodel = { group = "io.insert-koin", name = "koin-androidx-viewmodel", version = "2.2.3" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 #kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
-hilt = { id = "com.google.dagger.hilt.android", version.ref = "hiltAndroid" }
-ksp = { id = "com.google.devtools.ksp", version = "1.9.10-1.0.13" }
