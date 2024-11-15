@@ -10,6 +10,7 @@ import android.view.WindowManager
 import android.widget.SeekBar
 import androidx.appcompat.app.AppCompatActivity
 import com.example.speedometer_nextgen_1.databinding.DialogVolumeControlBinding
+import kotlin.math.pow
 
 class VolumeControlManager(
     private val context: Context,
@@ -44,9 +45,12 @@ class VolumeControlManager(
                     showVolumeWarningDialog(dialogBinding, progress)
                 }
 
-                // Update volume based on SeekBar's progress (scale 0-100)
-                volume = progress  / 100.0f
-                mediaPlayerPlus.updateBackgroundVolume(volume)
+                // volume=minVolume+(maxVolume−minVolume)×(progress/maxProgress)^p
+                val normalizedProgress = progress / 100.0f
+                volume = 1 + (100 - 1) * normalizedProgress.toDouble().pow(2.toDouble()).toFloat()
+                val scaledVolume = volume / 100
+
+                mediaPlayerPlus.updateBackgroundVolume(scaledVolume)
             }
 
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
