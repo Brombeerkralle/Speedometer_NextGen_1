@@ -29,13 +29,14 @@ import android.widget.LinearLayout
 import android.widget.PopupMenu
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import org.koin.android.ext.android.inject
+import org.koin.core.parameter.parametersOf
 
 class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, EasyPermissions.RationaleCallbacks {
 
     private lateinit var binding: ActivityMainBinding
     private val speedManagement: SpeedManagement by inject()
     private val mediaPlayerPlus: MediaPlayerPlus by inject()
-    private val volumeControlManager: VolumeControlManager by inject()
+    private val volumeControlManager: VolumeControlManager by inject() { parametersOf(this) }
     private val debugSettingsActivity: DebugSettingsActivity by inject() // if DebugSettingsActivity needs injection
     private val sharedPreferences: SharedPreferences by inject()
 
@@ -60,6 +61,11 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
                 onOptionsItemSelected(item)
             }
             popupMenu.show()
+        }
+
+        // Setup button to open volume control
+        findViewById<Button>(R.id.openVolumeControlButton).setOnClickListener {
+            volumeControlManager.showVolumeControlDialog()
         }
 
     }

@@ -11,4 +11,5 @@
     <item name="volumeButton" type="id" />
     <item name="menuControlButton" type="id" />
     <item name="playMusicButton" type="id" />
+    <item name="openVolumeControlButton" type="id" />
 </resources>

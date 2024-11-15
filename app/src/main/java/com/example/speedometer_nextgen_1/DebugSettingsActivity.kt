@@ -1,6 +1,7 @@
 package com.example.speedometer_nextgen_1
 
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.drawable.GradientDrawable
 import android.media.AudioManager
@@ -11,14 +12,17 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.example.speedometer_nextgen_1.databinding.ActivityDebugSettingsBinding
+import org.koin.android.ext.android.inject
+import org.koin.core.parameter.parametersOf
 
 class DebugSettingsActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityDebugSettingsBinding
-    private lateinit var mediaPlayerPlus: MediaPlayerPlus  // Initialize with volume settings as needed
-    private lateinit var volumeControlManager: VolumeControlManager
-    private lateinit var mainActivity: MainActivity
-    private lateinit var sharedPreferences: SharedPreferences
+
+    private val mediaPlayerPlus: MediaPlayerPlus by inject()
+    private val volumeControlManager: VolumeControlManager by inject()
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityDebugSettingsBinding.inflate(layoutInflater)
@@ -26,39 +30,9 @@ class DebugSettingsActivity : AppCompatActivity() {
 
         setupMenuControls()
 
-        // Use the shared instance of SharedPreferences
-        sharedPreferences = SharedPrefsManager.getPreferences()
-        val initialVolume = sharedPreferences.getFloat("backgroundVolume", 0.01f)
-        mediaPlayerPlus = MediaPlayerPlus(this, initialVolume)
-
-        // Then initialize volumeControlManager with the initialized mediaPlayerPlus
-        volumeControlManager = VolumeControlManager(this, mediaPlayerPlus, sharedPreferences, initialVolume)
-
-        mainActivity = MainActivity()
-
         setupMenuControls()
 
-        // Handle speed input and play music
-        binding.mockGPSinsertButton.setOnClickListener {
-            val speedText = binding.speedInput.text.toString()
-            if (speedText.isNotEmpty()) {
-                val speedValue = speedText.toIntOrNull()
-                if (speedValue != null) {
-                    // Call the method for speed management
-                    mainActivity.callSpeedIndicators(speedValue, "*")
-                } else {
-                    Toast.makeText(this, "Please enter a valid speed", Toast.LENGTH_SHORT).show()
-                }
-            } else {
-                Toast.makeText(this, "Speed input cannot be empty", Toast.LENGTH_SHORT).show()
-            }
-        }
 
-        // Volume control setup
-        binding.volumeControlButton.setOnClickListener {
-            // Call the volume control dialog from VolumeControlManager
-             volumeControlManager.showVolumeControlDialog()
-        }
 
         // Update indicator light based on media player state
         updateIndicatorLight()

@@ -5,18 +5,6 @@
     android:orientation="vertical"
     android:padding="16dp">
 
-    <!-- Speed Input and Play Music Button -->
-    <EditText
-        android:id="@+id/speedInput"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:hint="Enter Speed" />
-
-    <Button
-        android:id="@+id/mockGPSinsertButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Mock GPS" />
 
     <!-- Indicator Light -->
     <View
@@ -25,10 +13,4 @@
         android:layout_height="10dp"
         android:background="@drawable/circle_shape" />
 
-    <!-- Volume Control Button -->
-    <Button
-        android:id="@+id/volumeControlButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Volume Control" />
 </LinearLayout>

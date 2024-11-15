@@ -103,4 +103,11 @@
         android:layout_height="wrap_content"
         android:text="Menu" />
 
+    <Button
+        android:id="@+id/openVolumeControlButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Volume Control"
+        android:layout_marginTop="16dp" />
+
 </LinearLayout>
