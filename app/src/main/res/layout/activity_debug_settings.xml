@@ -9,8 +9,9 @@
     <!-- Indicator Light -->
     <View
         android:id="@+id/indicatorLight"
-        android:layout_width="10dp"
-        android:layout_height="10dp"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_gravity="center_horizontal"
         android:background="@drawable/circle_shape" />
 
 </LinearLayout>

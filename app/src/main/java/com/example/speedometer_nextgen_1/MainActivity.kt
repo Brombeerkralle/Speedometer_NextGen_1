@@ -48,9 +48,8 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
 
         // Initialize layout components
         initializeLayout()
-        //initializeClasses()
-        val locationServiceIntent = Intent(this, LocationService::class.java)
-        ContextCompat.startForegroundService(this, locationServiceIntent)
+        otherInits()
+
 
         // Button to open the menu
         val menuButton = findViewById<Button>(R.id.menuButton)
@@ -97,6 +96,13 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
         updateSystemBarsColor(ContextCompat.getColor(this, R.color.black))
     }
 
+    private fun otherInits() {
+        val locationServiceIntent = Intent(this, LocationService::class.java)
+        ContextCompat.startForegroundService(this, locationServiceIntent)
+
+        mediaPlayerPlus.playSilentAudio()
+    }
+
     private fun updateSystemBarsColor(color: Int) {
         window.statusBarColor = color
         window.navigationBarColor = color
@@ -109,7 +115,6 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
             val speed = intent?.getIntExtra("speed", 0) ?: 0
             val speedDecimal = intent?.getStringExtra("speedDecimal") ?: "*"
             Log.d("MainActivity", "Broadcast received: speed=$speed, decimal=$speedDecimal")
-
             // Update the UI on the main thread
             runOnUiThread {
                 callSpeedIndicators(speed, speedDecimal)

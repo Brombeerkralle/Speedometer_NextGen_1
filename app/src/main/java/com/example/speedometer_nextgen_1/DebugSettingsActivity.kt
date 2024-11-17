@@ -30,9 +30,6 @@ class DebugSettingsActivity : AppCompatActivity() {
 
         setupMenuControls()
 
-        setupMenuControls()
-
-
 
         // Update indicator light based on media player state
         updateIndicatorLight()

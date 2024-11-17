@@ -19,6 +19,7 @@ class VolumeControlManager(
     initialVolume: Float
 ) {
     private var volume: Float = initialVolume
+    private var logarythmicVolume = volume
     private var isDialogActive = false
     private var isVolumeMaxUnlocked = false  // Renamed from isBackgroundSoundMaxUnlocked
 
@@ -35,7 +36,7 @@ class VolumeControlManager(
             .create()
 
         // Set initial SeekBar progress based on current volume
-        dialogBinding.volumeSeekBar.progress = (volume * 100).toInt()
+        dialogBinding.volumeSeekBar.progress = (volume*100).toInt()
 
         // Setup SeekBar listener
         dialogBinding.volumeSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
@@ -47,8 +48,9 @@ class VolumeControlManager(
 
                 // volume=minVolume+(maxVolume−minVolume)×(progress/maxProgress)^p
                 val normalizedProgress = progress / 100.0f
-                volume = 1 + (100 - 1) * normalizedProgress.toDouble().pow(2.toDouble()).toFloat()
-                val scaledVolume = volume / 100
+                volume = normalizedProgress
+                logarythmicVolume = 1 + (100 - 1) * normalizedProgress.toDouble().pow(2.toDouble()).toFloat()
+                val scaledVolume = logarythmicVolume / 100
 
                 mediaPlayerPlus.updateBackgroundVolume(scaledVolume)
             }
