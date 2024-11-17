@@ -200,7 +200,6 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
     }
 
     override fun onDestroy() {
-        Toast.makeText(applicationContext, "onDestroy", Toast.LENGTH_SHORT).show()
         super.onDestroy()
         // Stop LocationService
         val locationServiceIntent = Intent(this, LocationService::class.java)
