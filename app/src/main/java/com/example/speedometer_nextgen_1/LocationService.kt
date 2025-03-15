@@ -61,7 +61,7 @@ class LocationService : Service() {
                         putExtra("speedDecimal", speedDecimal)
                     }
                     sendBroadcast(intent)  // Replacing LocalBroadcastManager
-                    Log.d("LocationService", "Broadcast sent: speed=$speedInt, decimal=$speedDecimal")
+                    Log.d("LocationService", "Broadcast sent: $speedInt,$speedDecimal")
                 }
             }
         }

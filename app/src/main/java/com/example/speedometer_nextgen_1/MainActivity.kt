@@ -114,7 +114,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
         override fun onReceive(context: Context?, intent: Intent?) {
             val speed = intent?.getIntExtra("speed", 0) ?: 0
             val speedDecimal = intent?.getStringExtra("speedDecimal") ?: "*"
-            Log.d("MainActivity", "Broadcast received: speed=$speed, decimal=$speedDecimal")
+            Log.d("MainActivity", "Broadcast received: $speed,$speedDecimal")
             // Update the UI on the main thread
             runOnUiThread {
                 callSpeedIndicators(speed, speedDecimal)
