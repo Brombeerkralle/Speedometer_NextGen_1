@@ -7,6 +7,10 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
 import android.os.IBinder
 import android.os.Looper
 import android.util.Log
@@ -15,20 +19,43 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.*
 import pub.devrel.easypermissions.EasyPermissions
+import java.util.Arrays
 import java.util.Locale
 
 class LocationService : Service() {
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
+    private lateinit var speedFilter: SpeedFilter
+    private lateinit var sensorManager: SensorManager
+    private lateinit var accelerometer: Sensor
+    private var accelerationMagnitude: Float = 0f
 
     override fun onCreate() {
         super.onCreate()
         startForegroundService()
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        speedFilter = SpeedFilter(5) // Initialize speedFilter here!
         createLocationCallback()
         startLocationUpdates()
+        initAccelerometer()
+    }
 
+    private fun initAccelerometer() {
+        sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)!!
+        val accelerometerListener = object : SensorEventListener {
+            override fun onSensorChanged(event: SensorEvent) {
+                val x = event.values[0]
+                val y = event.values[1]
+                val z = event.values[2]
+                accelerationMagnitude = Math.sqrt((x * x + y * y + z * z).toDouble()).toFloat()
+                //Log.d("LocationService", "ACCELEROMETER: $accelerationMagnitude")
+            }
+
+            override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {}
+        }
+        sensorManager.registerListener(accelerometerListener, accelerometer, SensorManager.SENSOR_DELAY_NORMAL)
     }
 
     private fun startForegroundService() {
@@ -51,14 +78,26 @@ class LocationService : Service() {
             override fun onLocationResult(locationResult: LocationResult) {
                 val location = locationResult.lastLocation
                 location?.let {
-                    val speedKmH = location.speed * 3.6
+                    var speedKmH = location.speed * 3.6f // Get the raw speed
+
+                    // Use accelerometer to adjust filtering
+                    if (accelerationMagnitude > 13) { // Adjust threshold as needed
+                        // If accelerating, trust the raw speed more
+                        // speedKmH is already set to the raw speed.
+                    } else {
+                        // If not accelerating, apply the median filter
+                        speedKmH = speedFilter.addSpeed(speedKmH)
+                    }
+
                     val speedInt = speedKmH.toInt()
                     val speedDecimal = "%.1f".format(Locale.US, speedKmH - speedInt).substringAfter('.')
+
 
                     // Broadcast the speed update
                     val intent = Intent("com.example.speedometer_nextgen_1.LOCATION_UPDATE").apply {
                         putExtra("speed", speedInt)
                         putExtra("speedDecimal", speedDecimal)
+                        putExtra("accelerationMagnitude", accelerationMagnitude)
                     }
                     sendBroadcast(intent)  // Replacing LocalBroadcastManager
                     Log.d("LocationService", "Broadcast sent: $speedInt,$speedDecimal")
@@ -88,5 +127,24 @@ class LocationService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         fusedLocationClient.removeLocationUpdates(locationCallback)
+        sensorManager.unregisterListener(object : SensorEventListener {
+            override fun onSensorChanged(event: SensorEvent) {}
+
+            override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {}
+        })
+    }
+
+    // SpeedFilter class
+    class SpeedFilter(private val historySize: Int) {
+        private val speedHistory = FloatArray(historySize)
+        private var currentIndex = 0
+
+        fun addSpeed(speed: Float): Float {
+            speedHistory[currentIndex] = speed
+            currentIndex = (currentIndex + 1) % historySize
+            val sortedSpeeds = speedHistory.clone()
+            Arrays.sort(sortedSpeeds)
+            return sortedSpeeds[historySize / 2]
+        }
     }
 }

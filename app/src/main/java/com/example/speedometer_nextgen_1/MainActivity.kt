@@ -118,10 +118,11 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
         override fun onReceive(context: Context?, intent: Intent?) {
             val speed = intent?.getIntExtra("speed", 0) ?: 0
             val speedDecimal = intent?.getStringExtra("speedDecimal") ?: "*"
-            Log.d("MainActivity", "Broadcast received: $speed,$speedDecimal")
+            val accelerationMagnitude = intent?.getFloatExtra("accelerationMagnitude", 99f) ?: 0
+            Log.d("MainActivity", "Broadcast received: $speed,$speedDecimal | Gyro: $accelerationMagnitude")
             // Update the UI on the main thread
             runOnUiThread {
-                callSpeedIndicators(speed, speedDecimal)
+                callSpeedIndicators(speed, speedDecimal, accelerationMagnitude.toString())
             }
         }
     }
@@ -144,9 +145,10 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
     }
 
     // Function that handles speed changes and calls background color change or music playback
-    fun callSpeedIndicators(speed: Int, speedAsDecimal: String) {
+    fun callSpeedIndicators(speed: Int, speedAsDecimal: String, accelerationMagnitude: String) {
         binding.currentSpeedId.text = speed.toString()
         binding.currentSpeedDecimalId.text = speedAsDecimal
+        binding.accelerometerID.text = accelerationMagnitude.take(4)
 
         val speedHasChanged = speedManagement.hasSpeedChanged(speed)
         val categoryHasChanged = speedManagement.hasCategoryChanged(speed)
