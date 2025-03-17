@@ -79,28 +79,29 @@ class LocationService : Service() {
                 val location = locationResult.lastLocation
                 location?.let {
                     var speedKmH = location.speed * 3.6f // Get the raw speed
-
-                    // Use accelerometer to adjust filtering
-                    if (accelerationMagnitude > 13) { // Adjust threshold as needed
+                    Log.d("LocationService", "Realtime Speed: $speedKmH")                    // Use accelerometer to adjust filtering
+                    /*if (accelerationMagnitude > 13) { // Adjust threshold as needed
                         // If accelerating, trust the raw speed more
                         // speedKmH is already set to the raw speed.
                     } else {
                         // If not accelerating, apply the median filter
                         speedKmH = speedFilter.addSpeed(speedKmH)
-                    }
+                    }*/
 
                     val speedInt = speedKmH.toInt()
                     val speedDecimal = "%.1f".format(Locale.US, speedKmH - speedInt).substringAfter('.')
 
-
+                    val gpsLocationAccuracy = location.accuracy
                     // Broadcast the speed update
                     val intent = Intent("com.example.speedometer_nextgen_1.LOCATION_UPDATE").apply {
                         putExtra("speed", speedInt)
                         putExtra("speedDecimal", speedDecimal)
                         putExtra("accelerationMagnitude", accelerationMagnitude)
+                        putExtra("gpsLocationAccuracy", gpsLocationAccuracy)
                     }
                     sendBroadcast(intent)  // Replacing LocalBroadcastManager
                     Log.d("LocationService", "Broadcast sent: $speedInt,$speedDecimal")
+                    Log.d("LocationService", "Accuracy: $gpsLocationAccuracy m")
                 }
             }
         }
@@ -108,8 +109,8 @@ class LocationService : Service() {
 
     private fun startLocationUpdates() {
         val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 100)
-            .setMinUpdateIntervalMillis(100)
-            .setMaxUpdateDelayMillis(50)
+            .setMinUpdateIntervalMillis(80)
+            .setMaxUpdateDelayMillis(40)
             .build()
 
         if (ActivityCompat.checkSelfPermission(

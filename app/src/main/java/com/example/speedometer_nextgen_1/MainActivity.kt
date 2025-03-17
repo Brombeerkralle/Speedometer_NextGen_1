@@ -9,7 +9,6 @@ import android.content.BroadcastReceiver
 import android.os.Bundle
 import android.view.WindowManager
 import android.widget.Button
-import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -18,20 +17,14 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.speedometer_nextgen_1.databinding.ActivityMainBinding
 import pub.devrel.easypermissions.EasyPermissions
-import android.media.AudioManager
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.SharedPreferences
-import android.graphics.drawable.GradientDrawable
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
-import android.view.View
-import android.widget.CheckBox
-import android.widget.LinearLayout
 import android.widget.PopupMenu
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import org.koin.android.ext.android.inject
 import org.koin.core.parameter.parametersOf
 
@@ -119,10 +112,11 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
             val speed = intent?.getIntExtra("speed", 0) ?: 0
             val speedDecimal = intent?.getStringExtra("speedDecimal") ?: "*"
             val accelerationMagnitude = intent?.getFloatExtra("accelerationMagnitude", 99f) ?: 0
-            Log.d("MainActivity", "Broadcast received: $speed,$speedDecimal | Gyro: $accelerationMagnitude")
+            val gpsLocationAccuracy = intent?.getFloatExtra("gpsLocationAccuracy", 99f) ?: 0
+ //Log.d("MainActivity", "Broadcast received: $speed,$speedDecimal | Gyro: $accelerationMagnitude")
             // Update the UI on the main thread
             runOnUiThread {
-                callSpeedIndicators(speed, speedDecimal, accelerationMagnitude.toString())
+                callSpeedIndicators(speed, speedDecimal, accelerationMagnitude.toString(), gpsLocationAccuracy)
             }
         }
     }
@@ -145,10 +139,11 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
     }
 
     // Function that handles speed changes and calls background color change or music playback
-    fun callSpeedIndicators(speed: Int, speedAsDecimal: String, accelerationMagnitude: String) {
+    fun callSpeedIndicators(speed: Int, speedAsDecimal: String, accelerationMagnitude: String, gpsLocationAccuracy: Number) {
         binding.currentSpeedId.text = speed.toString()
         binding.currentSpeedDecimalId.text = speedAsDecimal
-        binding.infotainmentID.text = accelerationMagnitude.take(4)
+        binding.infotainmentIDleft.text = accelerationMagnitude.take(3)
+        binding.infotainmentIDright.text = gpsLocationAccuracy.toString().take(4)
 
         val speedHasChanged = speedManagement.hasSpeedChanged(speed)
         val categoryHasChanged = speedManagement.hasCategoryChanged(speed)
