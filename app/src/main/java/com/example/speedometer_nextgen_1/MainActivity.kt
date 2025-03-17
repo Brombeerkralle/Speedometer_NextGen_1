@@ -148,7 +148,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
     fun callSpeedIndicators(speed: Int, speedAsDecimal: String, accelerationMagnitude: String) {
         binding.currentSpeedId.text = speed.toString()
         binding.currentSpeedDecimalId.text = speedAsDecimal
-        binding.accelerometerID.text = accelerationMagnitude.take(4)
+        binding.infotainmentID.text = accelerationMagnitude.take(4)
 
         val speedHasChanged = speedManagement.hasSpeedChanged(speed)
         val categoryHasChanged = speedManagement.hasCategoryChanged(speed)
