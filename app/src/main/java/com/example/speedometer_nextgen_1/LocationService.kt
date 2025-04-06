@@ -35,7 +35,7 @@ class LocationService : Service() {
         super.onCreate()
         startForegroundService()
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-        speedFilter = SpeedFilter(5) // Initialize speedFilter here!
+        speedFilter = SpeedFilter(3) // Initialize speedFilter here!
         createLocationCallback()
         startLocationUpdates()
         initAccelerometer()
@@ -79,6 +79,7 @@ class LocationService : Service() {
                 val location = locationResult.lastLocation
                 location?.let {
                     var speedKmH = location.speed * 3.6f // Get the raw speed
+                    speedKmH = speedFilter.addSpeed(speedKmH)
                     Log.d("LocationService", "Realtime Speed: $speedKmH")                    // Use accelerometer to adjust filtering
                     /*if (accelerationMagnitude > 13) { // Adjust threshold as needed
                         // If accelerating, trust the raw speed more

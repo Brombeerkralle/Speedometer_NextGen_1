@@ -142,7 +142,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
     fun callSpeedIndicators(speed: Int, speedAsDecimal: String, accelerationMagnitude: String, gpsLocationAccuracy: Number) {
         binding.currentSpeedId.text = speed.toString()
         binding.currentSpeedDecimalId.text = speedAsDecimal
-        binding.infotainmentIDleft.text = accelerationMagnitude.take(3)
+        binding.infotainmentIDleft.text = " "
         binding.infotainmentIDright.text = gpsLocationAccuracy.toString().take(4)
 
         val speedHasChanged = speedManagement.hasSpeedChanged(speed)
@@ -150,6 +150,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
 
         if (categoryHasChanged) {
             mediaPlayerPlus.playMusic(speedManagement.getSpeedCategory(speed))
+            binding.infotainmentIDleft.text = "Music"
         }
 
         if (speedHasChanged) {
