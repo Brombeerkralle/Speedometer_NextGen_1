@@ -16,14 +16,16 @@ class VolumeControlManager(
     private val context: Context,
     private val mediaPlayerPlus: MediaPlayerPlus,
     private val sharedPreferences: SharedPreferences,
-    initialVolume: Float
+    initialBackgroundVolume: Float,
+    initialIndicatorVolume: Float
 ) {
-    private var volume: Float = initialVolume
-    private var logarythmicVolume = volume
+    private var backgroundVolume: Float = initialBackgroundVolume
+    private var indicatorVolume: Float = initialIndicatorVolume
+    private var logarythmicVolume = backgroundVolume
     private var isDialogActive = false
     private var isVolumeMaxUnlocked = false  // Renamed from isBackgroundSoundMaxUnlocked
 
-    fun getBackgroundVolume(): Float = volume
+    fun getBackgroundVolume(): Float = backgroundVolume
 
     // Show the volume control dialog
     fun showVolumeControlDialog() {
@@ -36,25 +38,36 @@ class VolumeControlManager(
             .create()
 
         // Set initial SeekBar progress based on current volume
-        dialogBinding.volumeSeekBar.progress = (volume*100).toInt()
+        dialogBinding.backgroundVolumeSeekBar.progress = (backgroundVolume*100).toInt()
+        dialogBinding.indicatorVolumeSeekBar.progress = (indicatorVolume*100).toInt()
 
         // Setup SeekBar listener
-        dialogBinding.volumeSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+        dialogBinding.backgroundVolumeSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 if (progress > 50 && !isVolumeMaxUnlocked && !isDialogActive) {
                     isDialogActive = true
                     showVolumeWarningDialog(dialogBinding, progress)
                 }
-
                 // volume=minVolume+(maxVolume−minVolume)×(progress/maxProgress)^p
                 val normalizedProgress = progress / 100.0f
-                volume = normalizedProgress
-                logarythmicVolume = 1 + (100 - 1) * normalizedProgress.toDouble().pow(2.toDouble()).toFloat()
+                backgroundVolume = normalizedProgress
+                logarythmicVolume = 0.01f + (100 - 1) * normalizedProgress.toDouble().pow(2.toDouble()).toFloat()
                 val scaledVolume = logarythmicVolume / 100
 
                 mediaPlayerPlus.updateBackgroundVolume(scaledVolume)
             }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                saveVolume()
+            }
+        })
 
+        dialogBinding.indicatorVolumeSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                // volume=minVolume+(maxVolume−minVolume)×(progress/maxProgress)
+                indicatorVolume = progress / 100.0f
+                mediaPlayerPlus.updateIndicatorVolume(indicatorVolume)
+            }
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: SeekBar?) {
                 saveVolume()
@@ -72,7 +85,8 @@ class VolumeControlManager(
 
     private fun saveVolume() {
         with(sharedPreferences.edit()) {
-            putFloat("backgroundVolume", volume)
+            putFloat("backgroundVolume", backgroundVolume)
+            putFloat("indicatorVolume", indicatorVolume)
             apply()
         }
     }
@@ -85,11 +99,11 @@ class VolumeControlManager(
             .setPositiveButton("Yes") { _, _ ->
                 isDialogActive = false  // Reset dialog state
                 isVolumeMaxUnlocked = true
-                dialogBinding.volumeSeekBar.progress = progress  // Unlock to chosen volume
+                dialogBinding.backgroundVolumeSeekBar.progress = progress  // Unlock to chosen volume
             }
             .setNegativeButton("No") { _, _ ->
                 isDialogActive = false  // Reset dialog state
-                dialogBinding.volumeSeekBar.progress = 50  // Limit volume to 50%
+                dialogBinding.backgroundVolumeSeekBar.progress = 50  // Limit volume to 50%
             }
             .setCancelable(false)
             .show()

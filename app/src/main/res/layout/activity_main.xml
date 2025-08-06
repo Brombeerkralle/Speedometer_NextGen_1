@@ -11,24 +11,24 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:gravity="center_horizontal"
+        android:gravity="top|center_horizontal"
         android:orientation="vertical">
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
-
             <TextView
                 android:id="@+id/currentSpeedId"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="-30dp"
+                android:includeFontPadding="false"
                 android:shadowColor="#000000"
                 android:shadowDx="1"
                 android:shadowDy="1"
                 android:shadowRadius="100"
-                android:text="- -"
+                android:text="10"
                 android:textColor="#FFFFFF"
                 android:textSize="200sp"
                 android:textStyle="bold" />
@@ -36,6 +36,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="-30dp"
                 android:gravity="center"
                 android:shadowColor="#000000"
                 android:shadowDx="7"
@@ -49,7 +50,7 @@
                 android:id="@+id/currentSpeedDecimalId"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="-30dp"
                 android:shadowColor="#000000"
                 android:shadowDx="7"
                 android:shadowDy="7"
@@ -64,7 +65,7 @@
             android:id="@+id/kmhTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="5dp"
+            android:layout_marginTop="-30dp"
             android:shadowColor="#000000"
             android:shadowDx="7"
             android:shadowDy="7"
@@ -77,15 +78,15 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="10dp"
-            android:layout_marginTop="30dp"
+            android:layout_marginTop="-5dp"
             android:background="@color/black" />
 
         <TextClock
             android:id="@+id/textClock"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="0dp"
-            android:layout_marginBottom="0dp"
+            android:layout_marginTop="-30dp"
+            android:layout_marginBottom="200dp"
             android:format12Hour="HH:mm"
             android:shadowColor="#000000"
             android:shadowDx="7"
@@ -120,7 +121,7 @@
         android:shadowDx="10"
         android:shadowDy="10"
         android:shadowRadius="10"
-        android:text="0.0"
+        android:text="Info"
         android:textColor="#F1F2F3"
         android:textSize="100sp" />
 
@@ -135,7 +136,7 @@
         android:shadowDx="10"
         android:shadowDy="10"
         android:shadowRadius="10"
-        android:text="0,0"
+        android:text="GPS"
         android:textColor="#F1F2F3"
         android:textSize="60sp" />
 

@@ -21,10 +21,14 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.SharedPreferences
+import android.os.Build
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
+import android.view.WindowInsetsController
 import android.widget.PopupMenu
+import androidx.core.graphics.ColorUtils
 import org.koin.android.ext.android.inject
 import org.koin.core.parameter.parametersOf
 
@@ -103,6 +107,27 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
     private fun updateSystemBarsColor(color: Int) {
         window.statusBarColor = color
         window.navigationBarColor = color
+
+        //Change Status Bar Text to White
+        val insetsController = window.insetsController
+        if (insetsController != null) {
+            if (isLightBackground(color)) {
+                // Text/Icons dunkel (für helle Hintergründe)
+                insetsController.setSystemBarsAppearance(
+                    WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS,
+                    WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
+                )
+            } else {
+                // Text/Icons hell (für dunkle Hintergründe)
+                insetsController.setSystemBarsAppearance(
+                    0,
+                    WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
+                )
+            }
+        }
+    }
+    private fun isLightBackground(color: Int): Boolean {
+        return ColorUtils.calculateLuminance(color) > 0.5
     }
 
 
@@ -150,18 +175,17 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
 
         if (categoryHasChanged) {
             mediaPlayerPlus.playMusic(speedManagement.getSpeedCategory(speed))
-            binding.infotainmentIDleft.text = "Music"
+            //Visual Indicator that Music should be played now
+            //binding.infotainmentIDleft.text = "Music"
         }
-
         if (speedHasChanged) {
             speedManagement.updateBackgroundColor(speed) { color ->
                 binding.root.setBackgroundColor(color)
+                updateSystemBarsColor(color)
             }
             speedManagement.previousSpeed = speed
         }
     }
-
-
 
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -192,6 +216,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
     override fun onPause() {
         Toast.makeText(this, "onPause", Toast.LENGTH_SHORT).show()
         super.onPause()
+        Log.d("MainActivity", "Receiver unregistered in onPause")
     }
 
     override fun onStop() {
