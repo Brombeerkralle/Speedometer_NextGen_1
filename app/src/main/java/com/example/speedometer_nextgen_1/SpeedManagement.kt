@@ -8,6 +8,7 @@ class SpeedManagement(context: Context) {
 
     var previousSpeed: Int? = null
     private var previousCategory: SpeedCategory? = null
+    private var categoryChangedFlag = false
 
     private val colorUnder30 = ContextCompat.getColor(context, R.color.yellow)
     private val colorUnder50 = ContextCompat.getColor(context, R.color.green)
@@ -60,11 +61,21 @@ class SpeedManagement(context: Context) {
     }
 
     // Function to check if the speed category has changed
-    fun hasCategoryChanged(currentSpeed: Int): Boolean {
-        val currentCategory = getSpeedCategory(currentSpeed)
-        val changed = currentCategory != previousCategory
-        if (changed) previousCategory = currentCategory
-        return changed
+    fun hasCategoryChanged(speed: Int): Boolean {
+        val currentCategory = getSpeedCategory(speed)
+        if (currentCategory != previousCategory) {
+            previousCategory = currentCategory
+            categoryChangedFlag = true
+        }
+        if (categoryChangedFlag) {
+            categoryChangedFlag = false
+            return true
+        }
+        return false
+    }
+
+    fun hasCategoryChangedFlag(): Boolean {
+        return categoryChangedFlag
     }
 
     // Function to update the background color based on the speed

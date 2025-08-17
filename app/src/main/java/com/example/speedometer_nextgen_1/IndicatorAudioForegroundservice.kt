@@ -51,7 +51,7 @@ class IndicatorAudioForegroundservice : Service()  {
     private fun callSpeedIndicators(speed: Int, speedAsDecimal: String, accelerationMagnitude: String, gpsLocationAccuracy: Number) {
 
         val speedHasChanged = speedManagement.hasSpeedChanged(speed)
-        val categoryHasChanged = speedManagement.hasCategoryChanged(speed)
+        val categoryHasChanged = speedManagement.hasCategoryChangedFlag()
 
         if (categoryHasChanged) {
             mediaPlayerPlus.playMusic(speedManagement.getSpeedCategory(speed))
