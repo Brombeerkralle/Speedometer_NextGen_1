@@ -3,7 +3,7 @@ package com.example.speedometer_nextgen_1
 /**
  * Latest Running Version
  * Fully operational
- * Latest one on Win11
+ * Latest one on Win11 Narwahl
  */
 
 import android.content.BroadcastReceiver
@@ -22,6 +22,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
 import android.view.Menu
@@ -29,9 +30,12 @@ import android.view.MenuItem
 import android.view.View
 import android.view.WindowInsetsController
 import android.widget.PopupMenu
+import androidx.core.app.ActivityCompat
 import androidx.core.graphics.ColorUtils
 import org.koin.android.ext.android.inject
 import org.koin.core.parameter.parametersOf
+import android.Manifest
+
 
 class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, EasyPermissions.RationaleCallbacks {
 
@@ -42,6 +46,51 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
     private val debugSettingsActivity: DebugSettingsActivity by inject() // if DebugSettingsActivity needs injection
     private val sharedPreferences: SharedPreferences by inject()
 
+    private val LOCATION_PERMISSION_REQUEST_CODE = 100
+
+    private fun checkAndRequestLocationPermission() {
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                LOCATION_PERMISSION_REQUEST_CODE
+            )
+        } else {
+            startLocationService()
+        }
+    }
+
+    private fun startLocationService() {
+        val locationServiceIntent = Intent(this, LocationService::class.java)
+        ContextCompat.startForegroundService(this, locationServiceIntent)
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this)
+
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "Berechtigung erteilt", Toast.LENGTH_SHORT).show()
+                startLocationService()
+            } else {
+                Toast.makeText(
+                    this,
+                    "Standort-Berechtigung erforderlich für GPS-Funktion.",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -99,8 +148,10 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
     }
 
     private fun otherInits() {
-        val locationServiceIntent = Intent(this, LocationService::class.java)
-        ContextCompat.startForegroundService(this, locationServiceIntent)
+        checkAndRequestLocationPermission()
+
+        val indicatorAudioForegroundserviceIntent = Intent(this, IndicatorAudioForegroundservice::class.java)
+        ContextCompat.startForegroundService(this, indicatorAudioForegroundserviceIntent)
 
         mediaPlayerPlus.playSilentAudio()
     }
@@ -177,7 +228,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
         if (categoryHasChanged) {
             mediaPlayerPlus.playMusic(speedManagement.getSpeedCategory(speed))
             //Visual Indicator that Music should be played now
-            //binding.infotainmentIDleft.text = "Music"
+            binding.infotainmentIDleft.text = "Music"
         }
         if (speedHasChanged) {
             speedManagement.updateBackgroundColor(speed) { color ->
@@ -189,10 +240,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
     }
 
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this)
-    }
+
     override fun onPermissionsDenied(requestCode: Int, perms: MutableList<String>) {
         //gpsGetSpeed.onPermissionsDenied(perms)
         Toast.makeText(this, "onPermissionsDenied", Toast.LENGTH_SHORT).show()

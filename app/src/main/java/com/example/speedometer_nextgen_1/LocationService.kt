@@ -33,6 +33,22 @@ class LocationService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+            && ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            Log.e("LocationService", "Keine Standort-Berechtigung, Service wird gestoppt!")
+            stopSelf()
+            return
+        }
+
+
         startForegroundService()
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         speedFilter = SpeedFilter(3) // Initialize speedFilter here!

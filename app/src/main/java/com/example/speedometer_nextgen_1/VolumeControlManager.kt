@@ -3,6 +3,7 @@ package com.example.speedometer_nextgen_1
 
 import android.app.AlertDialog
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.util.Log
 import android.view.LayoutInflater
@@ -71,6 +72,13 @@ class VolumeControlManager(
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: SeekBar?) {
                 saveVolume()
+                val intent = Intent("com.example.speedometer_nextgen_1.LOCATION_UPDATE").apply {
+                    putExtra("speed", 30)
+                    putExtra("speedDecimal", 33)
+                    putExtra("accelerationMagnitude", 33)
+                    putExtra("gpsLocationAccuracy", 33)
+                }
+                context.sendBroadcast(intent)  // Replacing LocalBroadcastManager
             }
         })
 
