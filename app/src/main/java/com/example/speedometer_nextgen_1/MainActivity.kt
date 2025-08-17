@@ -3,6 +3,7 @@ package com.example.speedometer_nextgen_1
 /**
  * Latest Running Version
  * Fully operational
+ * Latest one on Win11
  */
 
 import android.content.BroadcastReceiver
