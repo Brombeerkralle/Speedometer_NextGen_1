@@ -66,10 +66,10 @@ class SpeedManagement(context: Context) {
         if (currentCategory != previousCategory) {
             previousCategory = currentCategory
             categoryChangedFlag = true
-        }
-        if (categoryChangedFlag) {
-            categoryChangedFlag = false
             return true
+        }
+        else if (categoryChangedFlag) {
+            categoryChangedFlag = false
         }
         return false
     }

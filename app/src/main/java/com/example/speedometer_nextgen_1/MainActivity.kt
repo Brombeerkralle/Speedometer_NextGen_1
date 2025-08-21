@@ -226,7 +226,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
         val categoryHasChanged = speedManagement.hasCategoryChanged(speed)
 
         if (categoryHasChanged) {
-            mediaPlayerPlus.playMusic(speedManagement.getSpeedCategory(speed))
+            //mediaPlayerPlus.playMusic(speedManagement.getSpeedCategory(speed))
             //Visual Indicator that Music should be played now
             binding.infotainmentIDleft.text = "Music"
         }

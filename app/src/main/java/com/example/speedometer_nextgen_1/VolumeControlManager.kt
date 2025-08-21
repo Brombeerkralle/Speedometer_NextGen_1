@@ -73,10 +73,10 @@ class VolumeControlManager(
             override fun onStopTrackingTouch(seekBar: SeekBar?) {
                 saveVolume()
                 val intent = Intent("com.example.speedometer_nextgen_1.LOCATION_UPDATE").apply {
-                    putExtra("speed", 30)
-                    putExtra("speedDecimal", 33)
-                    putExtra("accelerationMagnitude", 33)
-                    putExtra("gpsLocationAccuracy", 33)
+                    putExtra("speed",50)
+                    putExtra("speedDecimal", "55")
+                    putExtra("accelerationMagnitude", 55f)
+                    putExtra("gpsLocationAccuracy", 55f)
                 }
                 context.sendBroadcast(intent)  // Replacing LocalBroadcastManager
             }
