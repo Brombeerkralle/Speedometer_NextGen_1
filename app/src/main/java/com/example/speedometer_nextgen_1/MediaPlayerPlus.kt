@@ -21,6 +21,11 @@ class MediaPlayerPlus(
     private var backgroundVolume: Float = initialBackgroundVolume // Set initial background volume
     private var indicatorVolume: Float = initialIndicatorVolume // Set initial background volume
 
+
+    private var soundsLoaded = false
+    private var soundsToLoad = 0
+    private var soundsLoadedCount = 0
+
     init {
         loadSounds()
     }
@@ -36,6 +41,23 @@ class MediaPlayerPlus(
             .setAudioAttributes(audioAttributes)
             .build()
 
+        soundPool?.setOnLoadCompleteListener { _, sampleId, status ->
+            if (status == 0) { // success
+                soundsLoadedCount++
+                Log.d("MediaPlayerPlus", "Sound loaded: $sampleId ($soundsLoadedCount/$soundsToLoad)")
+                if (soundsLoadedCount >= soundsToLoad) {
+                    soundsLoaded = true
+                    Log.d("MediaPlayerPlus", "All sounds loaded")
+                }
+            } else {
+                Log.w("MediaPlayerPlus", "Failed to load sound ID: $sampleId")
+            }
+        }
+
+        // Anzahl der zu ladenden Sounds
+        soundsToLoad = 3
+
+
         soundMap[SpeedCategory.SPEEDING_UP] = soundPool?.load(context, R.raw.speedupmaestro3, 1) ?: 0
         soundMap[SpeedCategory.CRUISING] = soundPool?.load(context, R.raw.maintainmaestro3, 1) ?: 0
         soundMap[SpeedCategory.SLOWING_DOWN] = soundPool?.load(context, R.raw.downmaestro3, 1) ?: 0
@@ -46,8 +68,9 @@ class MediaPlayerPlus(
         if (soundId != null && soundId != 0 && soundPool != null) {
             soundPool?.play(soundId, indicatorVolume, indicatorVolume, 0, 0, 1.0f)
             // Log.d("MediaPlayerPlus", "indicatorVolume $indicatorVolume")
+            Log.w("MediaPlayerPlus", "----------\nAudio Played\n--------")
         } else {
-            //Log.w("MediaPlayerPlus", "Could not play sound for $speedCategory (ID: $soundId, SoundPool: $soundPool)")
+            Log.w("MediaPlayerPlus", "Could not play sound for $speedCategory (ID: $soundId, SoundPool: $soundPool)")
         }
     }
 

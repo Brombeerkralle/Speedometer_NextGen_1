@@ -62,14 +62,13 @@ class IndicatorAudioForegroundservice : Service()  {
     // Function that handles speed changes and calls background color change or music playback
     private fun callSpeedIndicators(speed: Int, speedAsDecimal: String, accelerationMagnitude: String, gpsLocationAccuracy: Number) {
 
-        val speedHasChanged = speedManagement.hasSpeedChanged(speed)
         val categoryHasChanged = speedManagement.hasCategoryChangedFlag()
         Log.w("IAFS", "----------\nforeground Audio Service Active\n--------")
         if (categoryHasChanged) {
             mediaPlayerPlus.playMusic(speedManagement.getSpeedCategory(speed))
             //Visual Indicator that Music should be played now
             //binding.infotainmentIDleft.text = "Music"
-            Log.w("IAFS", "----------\nAudio Playes\n--------")
+            Log.w("IAFS", "----------\nAudio Requested\n--------")
         }
     }
 

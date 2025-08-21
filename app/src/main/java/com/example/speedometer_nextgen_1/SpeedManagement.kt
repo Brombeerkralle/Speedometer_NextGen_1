@@ -1,6 +1,7 @@
 package com.example.speedometer_nextgen_1
 
 import android.content.Context
+import android.util.Log
 import androidx.core.content.ContextCompat
 import kotlin.math.abs
 
@@ -57,6 +58,7 @@ class SpeedManagement(context: Context) {
     fun hasSpeedChanged(currentSpeed: Int): Boolean {
         val changed = previousSpeed == null || abs(currentSpeed - (previousSpeed ?: 0)) > 1
         if (changed) previousSpeed = currentSpeed
+        Log.v("SpeedManagement", "--\n---\n--\nHs Speed Changed?: $changed\n---\n--\n")
         return changed
     }
 
@@ -87,6 +89,7 @@ class SpeedManagement(context: Context) {
             speed < 80 -> colorUnder80
             else -> colorOver80
         }
+        Log.v("SpeedManagement", "--\n---\n--\nupdateBackgroundColor called with speed $speed, color $color")
         updateView(color)
     }
 }
