@@ -260,6 +260,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
             ContextCompat.RECEIVER_EXPORTED
         )
         Log.d("MainActivity", "Receiver registered in onResume")
+        mediaPlayerPlus.loadSounds()
     }
 
     override fun onPause() {

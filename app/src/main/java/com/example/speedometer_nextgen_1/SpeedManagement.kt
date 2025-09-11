@@ -58,7 +58,7 @@ class SpeedManagement(context: Context) {
     fun hasSpeedChanged(currentSpeed: Int): Boolean {
         val changed = previousSpeed == null || abs(currentSpeed - (previousSpeed ?: 0)) > 1
         if (changed) previousSpeed = currentSpeed
-        Log.v("SpeedManagement", "--\n---\n--\nHs Speed Changed?: $changed\n---\n--\n")
+        //Log.v("SpeedManagement", "--\n--\n--\nHs Speed Changed?: $changed\n--\n--\n")
         return changed
     }
 
