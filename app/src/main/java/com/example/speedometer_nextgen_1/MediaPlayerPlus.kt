@@ -1,7 +1,6 @@
 package com.example.speedometer_nextgen_1
 
 import android.content.Context
-import android.content.SharedPreferences
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.media.SoundPool
