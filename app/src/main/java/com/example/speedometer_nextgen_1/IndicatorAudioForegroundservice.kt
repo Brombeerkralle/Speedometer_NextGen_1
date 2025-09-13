@@ -63,9 +63,10 @@ class IndicatorAudioForegroundservice : Service()  {
     private fun callSpeedIndicators(speed: Int, speedAsDecimal: String, accelerationMagnitude: String, gpsLocationAccuracy: Number) {
 
         val categoryHasChanged = speedManagement.hasCategoryChangedFlag()
-        Log.w("IAFS", "----------\nforeground Audio Service Active\n--------")
+        Log.w("IAFS", "----------\nforeground Audio Service Active\n        $categoryHasChanged\n --------")
         if (categoryHasChanged) {
             val speedCategory = speedManagement.getSpeedCategory(speed)
+            Log.w("IAFS", "         $speed\n        $speedCategory\n --------")
             if (speedCategory != SpeedCategory.UNKNOWN) {
                 mediaPlayerPlus.playMusic(speedCategory)
                 //Visual Indicator that Music should be played now

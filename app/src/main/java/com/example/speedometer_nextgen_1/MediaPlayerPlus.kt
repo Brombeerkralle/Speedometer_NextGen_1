@@ -55,7 +55,7 @@ class MediaPlayerPlus(
                 Log.d("MediaPlayerPlus", "Sound loaded: $sampleId ($soundsLoadedCount/$soundsToLoad)")
                 if (soundsLoadedCount >= soundsToLoad) {
                     soundsLoaded = true
-                    Log.d("MediaPlayerPlus", "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nAll sounds loaded\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
+                    Log.d("MediaPlayerPlus", "\n.\n.\n.\n.\n.\n.\n.\n.\n.\n.\n.\n.\n.\n.\n.\nAll sounds loaded\n.\n.\n.\n.\n.\n.\n.\n.\n.\n.\n.\n.\n.\n.\n.\n")
                     onSoundsLoadedListener?.invoke()  // Callback auslösen
                 }
             } else {
@@ -84,6 +84,12 @@ class MediaPlayerPlus(
             } else {
                 Log.w("MediaPlayerPlus", "Failed to load sound for category $category")
             }
+        }
+        val testsound = soundMap[SpeedCategory.UNKNOWN]
+        if (testsound != null && testsound != 0) {
+            soundPool?.play(testsound, indicatorVolume, indicatorVolume, 0, 0, 1.0f)
+            Log.w("MediaPlayerPlus", "Audio Played")
+            /*TODO warum spielt dieses AUdio nicht ab?*/
         }
     }
     // Play nur, wenn SoundPool existiert und alle Sounds geladen sind
