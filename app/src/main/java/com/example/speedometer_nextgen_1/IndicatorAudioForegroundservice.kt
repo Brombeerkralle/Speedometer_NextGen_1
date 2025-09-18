@@ -68,10 +68,10 @@ class IndicatorAudioForegroundservice : Service()  {
             val speedCategory = speedManagement.getSpeedCategory(speed)
             Log.w("IAFS", "         $speed\n        $speedCategory\n --------")
             if (speedCategory != SpeedCategory.UNKNOWN) {
+                Log.w("IAFS", "----------\nAudio Requested\n--------")
                 mediaPlayerPlus.playMusic(speedCategory)
                 //Visual Indicator that Music should be played now
                 //binding.infotainmentIDleft.text = "Music"
-                Log.w("IAFS", "----------\nAudio Requested\n--------")
             }
         }
     }
