@@ -11,16 +11,19 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import android.os.Binder
 import android.os.IBinder
 import android.os.Looper
 import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.MutableLiveData
 import com.google.android.gms.location.*
 import pub.devrel.easypermissions.EasyPermissions
 import java.util.Arrays
 import java.util.Locale
+
 
 class LocationService : Service() {
 
@@ -30,6 +33,42 @@ class LocationService : Service() {
     private lateinit var sensorManager: SensorManager
     private lateinit var accelerometer: Sensor
     private var accelerationMagnitude: Float = 0f
+
+    // LiveData für die MainActivity
+    val speedData = MutableLiveData<Int>()
+    val speedDecimalData = MutableLiveData<String>()
+    val accelerationMagnitudeData = MutableLiveData<Float>()
+    val gpsLocationAccuracyData = MutableLiveData<Number>()
+
+    // Liste von Listeners für den Audioservice
+    private val listeners = mutableListOf<LocationUpdateListener>()
+
+    // Schnittstelle für die direkte Kommunikation mit dem Audioservice
+    interface LocationUpdateListener {
+        fun onLocationUpdate(speed: Int, speedAsDecimal: String, accelerationMagnitude: Float, gpsLocationAccuracy: Number)
+    }
+
+    // Methode zum Hinzufügen eines Listeners
+    fun addListener(listener: LocationUpdateListener) {
+        listeners.add(listener)
+    }
+
+    // Methode zum Entfernen eines Listeners
+    fun removeListener(listener: LocationUpdateListener) {
+        listeners.remove(listener)
+    }
+
+    // Binder für die Kommunikation mit Clients (z.B. MainActivity)
+    private val binder = LocalBinder()
+
+    inner class LocalBinder : Binder() {
+        fun getService(): LocationService = this@LocationService
+    }
+
+    override fun onBind(intent: Intent?): IBinder {
+        return binder
+    }
+
 
     override fun onCreate() {
         super.onCreate()
@@ -109,6 +148,24 @@ class LocationService : Service() {
                     val speedDecimal = "%.1f".format(Locale.US, speedKmH - speedInt).substringAfter('.')
 
                     val gpsLocationAccuracy = location.accuracy
+
+
+                    // 1. Updates für LiveData (an die MainActivity)
+                    speedData.postValue(speedInt)
+                    speedDecimalData.postValue(speedDecimal)
+                    accelerationMagnitudeData.postValue(accelerationMagnitude)
+                    gpsLocationAccuracyData.postValue(gpsLocationAccuracy)
+
+                    // 2. Updates für Listener (an den Audioservice)
+                    listeners.forEach {
+                        it.onLocationUpdate(speedInt, speedDecimal, accelerationMagnitude, gpsLocationAccuracy)
+                    }
+
+                    Log.d("LocationService", "Updates sent to LiveData and Listeners.")
+
+
+
+/*
                     // Broadcast the speed update
                     val intent = Intent("com.example.speedometer_nextgen_1.LOCATION_UPDATE").apply {
                         putExtra("speed", speedInt)
@@ -119,6 +176,10 @@ class LocationService : Service() {
                     sendBroadcast(intent)  // Replacing LocalBroadcastManager
                     Log.d("LocationService", "Broadcast sent: $speedInt,$speedDecimal")
                     Log.d("LocationService", "Accuracy: $gpsLocationAccuracy m")
+
+ */
+
+
                 }
             }
         }
@@ -138,9 +199,6 @@ class LocationService : Service() {
         fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
     }
 
-    override fun onBind(intent: Intent?): IBinder? {
-        return null
-    }
 
     override fun onDestroy() {
         super.onDestroy()

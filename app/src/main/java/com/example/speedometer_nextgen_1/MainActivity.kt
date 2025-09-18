@@ -35,6 +35,9 @@ import androidx.core.graphics.ColorUtils
 import org.koin.android.ext.android.inject
 import org.koin.core.parameter.parametersOf
 import android.Manifest
+import android.content.ComponentName
+import android.content.ServiceConnection
+import android.os.IBinder
 
 
 class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, EasyPermissions.RationaleCallbacks {
@@ -47,6 +50,23 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
     private val sharedPreferences: SharedPreferences by inject()
 
     private val LOCATION_PERMISSION_REQUEST_CODE = 100
+
+    private var locationService: LocationService? = null
+    private var isBound = false
+
+    private val serviceConnection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+            val binder = service as LocationService.LocalBinder
+            locationService = binder.getService()
+            isBound = true
+            // Observer auf die LiveData des Service setzen
+            observeLocationData()
+        }
+        override fun onServiceDisconnected(name: ComponentName?) {
+            locationService = null
+            isBound = false
+        }
+    }
 
     private fun checkAndRequestLocationPermission() {
         if (ContextCompat.checkSelfPermission(
@@ -67,7 +87,23 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
     private fun startLocationService() {
         val locationServiceIntent = Intent(this, LocationService::class.java)
         ContextCompat.startForegroundService(this, locationServiceIntent)
+        bindService(locationServiceIntent, serviceConnection, Context.BIND_AUTO_CREATE)
     }
+
+    private fun observeLocationData() {
+        locationService?.speedData?.observe(this) { speed ->
+            binding.currentSpeedId.text = speed.toString()
+            handleSpeedIndicators(speed)
+        }
+        locationService?.speedDecimalData?.observe(this) { speedDecimal ->
+            binding.currentSpeedDecimalId.text = speedDecimal
+        }
+        locationService?.gpsLocationAccuracyData?.observe(this) { accuracy ->
+            binding.infotainmentIDright.text = accuracy.toString().take(4)
+        }
+        // Die anderen LiveData-Observer hier einfügen...
+    }
+
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
@@ -183,7 +219,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
     }
 
 
-
+/*
     private val locationUpdateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             val speed = intent?.getIntExtra("speed", 0) ?: 0
@@ -196,7 +232,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
                 callSpeedIndicators(speed, speedDecimal, accelerationMagnitude.toString(), gpsLocationAccuracy)
             }
         }
-    }
+    }*/
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.main_menu, menu)
@@ -216,20 +252,16 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
     }
 
     // Function that handles speed changes and calls background color change or music playback
-    fun callSpeedIndicators(speed: Int, speedAsDecimal: String, accelerationMagnitude: String, gpsLocationAccuracy: Number) {
-        binding.currentSpeedId.text = speed.toString()
-        binding.currentSpeedDecimalId.text = speedAsDecimal
-        binding.infotainmentIDleft.text = " "
-        binding.infotainmentIDright.text = gpsLocationAccuracy.toString().take(4)
-
+    private fun handleSpeedIndicators(speed: Int) {
         val speedHasChanged = speedManagement.hasSpeedChanged(speed)
         val categoryHasChanged = speedManagement.hasCategoryChanged(speed)
 
         if (categoryHasChanged) {
-            //mediaPlayerPlus.playMusic(speedManagement.getSpeedCategory(speed))
-            //Visual Indicator that Music should be played now
             binding.infotainmentIDleft.text = "Music"
+        } else {
+            binding.infotainmentIDleft.text = " "
         }
+
         if (speedHasChanged) {
             speedManagement.updateBackgroundColor(speed) { color ->
                 binding.root.setBackgroundColor(color)
@@ -252,7 +284,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
     override fun onResume() {
         Toast.makeText(this, "onResume", Toast.LENGTH_SHORT).show()
         super.onResume()
-        val filter = IntentFilter("com.example.speedometer_nextgen_1.LOCATION_UPDATE")
+        /*val filter = IntentFilter("com.example.speedometer_nextgen_1.LOCATION_UPDATE")
         ContextCompat.registerReceiver(
             this,
             locationUpdateReceiver,
@@ -260,6 +292,11 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
             ContextCompat.RECEIVER_EXPORTED
         )
         Log.d("MainActivity", "Receiver registered in onResume")
+        mediaPlayerPlus.loadSounds()*/
+
+        Log.d("MainActivity", "onResume - attempting to bind to service")
+        val intent = Intent(this, LocationService::class.java)
+        bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
         mediaPlayerPlus.loadSounds()
     }
 
@@ -267,12 +304,16 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
         Toast.makeText(this, "onPause", Toast.LENGTH_SHORT).show()
         super.onPause()
         Log.d("MainActivity", "Receiver unregistered in onPause")
+        if (isBound) {
+            unbindService(serviceConnection)
+            isBound = false
+        }
     }
 
     override fun onStop() {
         Toast.makeText(this, "onStop", Toast.LENGTH_SHORT).show()
         super.onStop()
-        unregisterReceiver(locationUpdateReceiver)
+       // unregisterReceiver(locationUpdateReceiver)
         Log.d("MainActivity", "Receiver unregistered in onStop")
     }
 
@@ -280,8 +321,13 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
         Toast.makeText(this, "onDestroy", Toast.LENGTH_SHORT).show()
         super.onDestroy()
         // Stop LocationService
-        val locationServiceIntent = Intent(this, LocationService::class.java)
-        stopService(locationServiceIntent)
+       // val locationServiceIntent = Intent(this, LocationService::class.java)
+       // stopService(locationServiceIntent)
+
+        if (isBound) {
+            unbindService(serviceConnection)
+            isBound = false
+        }
 
         mediaPlayerPlus.release()
         mediaPlayerPlus.releaseBackgroundPlayer()
