@@ -241,4 +241,10 @@ class LocationService : Service() {
 
         Log.d("LocationService", "Test update triggered: Speed $testSpeedInt, Decimal $testSpeedDecimal, Accel $testAcceleration, Accuracy $testAccuracy")
     }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        // Stop the service and remove the notification
+        stopSelf()
+        super.onTaskRemoved(rootIntent)
+    }
 }

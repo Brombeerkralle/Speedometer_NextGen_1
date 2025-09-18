@@ -86,7 +86,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="-30dp"
-            android:layout_marginBottom="200dp"
+            android:layout_marginBottom="140dp"
             android:format12Hour="HH:mm"
             android:shadowColor="#000000"
             android:shadowDx="7"
@@ -107,6 +107,14 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:text="Volume Control" />
+
+        <Button
+            android:id="@+id/destroyApp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="finish him"
+            android:textAllCaps="false" />
 
     </LinearLayout>
 

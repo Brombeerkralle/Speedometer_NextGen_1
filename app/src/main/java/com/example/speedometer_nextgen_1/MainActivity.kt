@@ -148,6 +148,10 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
             volumeControlManager.showVolumeControlDialog()
         }
 
+        findViewById<Button>(R.id.destroyApp).setOnClickListener {
+            finish()
+        }
+
     }
 
 
@@ -312,11 +316,15 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
     }
 
     override fun onDestroy() {
+        Log.d("MainActivity", "Receiver Destroyed\n.\n.\n.\n.")
         Toast.makeText(this, "onDestroy", Toast.LENGTH_SHORT).show()
-        super.onDestroy()
-        //Stop LocationService
+
+        // Stop both services
         val locationServiceIntent = Intent(this, LocationService::class.java)
         stopService(locationServiceIntent)
+
+        val audioServiceIntent = Intent(this, IndicatorAudioForegroundservice::class.java)
+        stopService(audioServiceIntent)
 
         if (isBound) {
             unbindService(serviceConnection)
@@ -325,6 +333,8 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
 
         mediaPlayerPlus.release()
         mediaPlayerPlus.releaseBackgroundPlayer()
+
+        super.onDestroy()
     }
     override fun onRationaleAccepted(requestCode: Int) {}
     override fun onRationaleDenied(requestCode: Int) {}

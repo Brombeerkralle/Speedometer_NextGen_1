@@ -124,4 +124,9 @@ class IndicatorAudioForegroundservice : Service(), LocationService.LocationUpdat
             isBound = false
         }
     }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        stopSelf() // This will call onDestroy()
+        super.onTaskRemoved(rootIntent)
+    }
 }
