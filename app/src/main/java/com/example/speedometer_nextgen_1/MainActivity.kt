@@ -6,7 +6,6 @@ package com.example.speedometer_nextgen_1
  * Latest one on Win11 Narwahl
  */
 
-import android.content.BroadcastReceiver
 import android.os.Bundle
 import android.view.WindowManager
 import android.widget.Button
@@ -18,16 +17,11 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.speedometer_nextgen_1.databinding.ActivityMainBinding
 import pub.devrel.easypermissions.EasyPermissions
-import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
-import android.content.SharedPreferences
 import android.content.pm.PackageManager
-import android.os.Build
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
-import android.view.View
 import android.view.WindowInsetsController
 import android.widget.PopupMenu
 import androidx.core.app.ActivityCompat
@@ -46,8 +40,6 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
     private val speedManagement: SpeedManagement by inject()
     private val mediaPlayerPlus: MediaPlayerPlus by inject()
     private val volumeControlManager: VolumeControlManager by inject() { parametersOf(this) }
-    private val debugSettingsActivity: DebugSettingsActivity by inject() // if DebugSettingsActivity needs injection
-    private val sharedPreferences: SharedPreferences by inject()
 
     private val LOCATION_PERMISSION_REQUEST_CODE = 100
 
@@ -89,7 +81,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
     private fun startLocationService() {
         val locationServiceIntent = Intent(this, LocationService::class.java)
         ContextCompat.startForegroundService(this, locationServiceIntent)
-        bindService(locationServiceIntent, serviceConnection, Context.BIND_AUTO_CREATE)
+        bindService(locationServiceIntent, serviceConnection, BIND_AUTO_CREATE)
     }
 
     private fun observeLocationData() {
@@ -259,7 +251,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
         val categoryHasChanged = speedManagement.hasCategoryChanged(speed)
 
         if (categoryHasChanged) {
-            binding.infotainmentIDleft.text = "Music"
+            binding.infotainmentIDleft.text = getString(R.string.music_indicator_text)
         } else {
             binding.infotainmentIDleft.text = " "
         }
@@ -298,7 +290,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
 
         Log.d("MainActivity", "onResume - attempting to bind to service")
         val intent = Intent(this, LocationService::class.java)
-        bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
+        bindService(intent, serviceConnection, BIND_AUTO_CREATE)
         mediaPlayerPlus.loadSounds()
     }
 

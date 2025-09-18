@@ -3,16 +3,11 @@ package com.example.speedometer_nextgen_1
 
 import android.app.AlertDialog
 import android.content.Context
-import android.content.Intent
 import android.content.SharedPreferences
-import android.os.Binder
-import android.os.IBinder
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.WindowManager
 import android.widget.SeekBar
-import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.MutableLiveData
+import androidx.core.content.edit
 import com.example.speedometer_nextgen_1.databinding.DialogVolumeControlBinding
 import kotlin.math.pow
 
@@ -31,8 +26,6 @@ class VolumeControlManager(
     private var isVolumeMaxUnlocked = false  // Renamed from isBackgroundSoundMaxUnlocked
 
 
-
-    fun getBackgroundVolume(): Float = backgroundVolume
 
     // Show the volume control dialog
     fun showVolumeControlDialog() {
@@ -102,10 +95,9 @@ class VolumeControlManager(
     }
 
     private fun saveVolume() {
-        with(sharedPreferences.edit()) {
+        sharedPreferences.edit {
             putFloat("backgroundVolume", backgroundVolume)
             putFloat("indicatorVolume", indicatorVolume)
-            apply()
         }
     }
 

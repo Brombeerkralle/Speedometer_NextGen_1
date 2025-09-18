@@ -3,16 +3,11 @@ package com.example.speedometer_nextgen_1
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
-import android.content.BroadcastReceiver
 import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.content.ServiceConnection
 import android.os.IBinder
-import android.util.Log
 import androidx.core.app.NotificationCompat
-import androidx.core.content.ContextCompat
 import org.koin.android.ext.android.inject
 
 class IndicatorAudioForegroundservice : Service(), LocationService.LocationUpdateListener {
@@ -55,7 +50,7 @@ class IndicatorAudioForegroundservice : Service(), LocationService.LocationUpdat
 
         // Binden an den LocationService
         val locationServiceIntent = Intent(this, LocationService::class.java)
-        bindService(locationServiceIntent, serviceConnection, Context.BIND_AUTO_CREATE)
+        bindService(locationServiceIntent, serviceConnection, BIND_AUTO_CREATE)
 
     }
 
@@ -64,7 +59,7 @@ class IndicatorAudioForegroundservice : Service(), LocationService.LocationUpdat
         val channelName = "Indicator sound chanel"
         val channel =
             NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_DEFAULT)
-        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         manager.createNotificationChannel(channel)
         val notification = NotificationCompat.Builder(this, channelId)
             .setContentTitle("Indicator sound")

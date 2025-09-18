@@ -4,7 +4,6 @@ import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.hardware.Sensor
@@ -17,13 +16,11 @@ import android.os.Looper
 import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.MutableLiveData
 import com.google.android.gms.location.*
-import pub.devrel.easypermissions.EasyPermissions
 import java.util.Arrays
 import java.util.Locale
-
+import kotlin.math.sqrt
 
 class LocationService : Service() {
 
@@ -97,14 +94,14 @@ class LocationService : Service() {
     }
 
     private fun initAccelerometer() {
-        sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)!!
         val accelerometerListener = object : SensorEventListener {
             override fun onSensorChanged(event: SensorEvent) {
                 val x = event.values[0]
                 val y = event.values[1]
                 val z = event.values[2]
-                accelerationMagnitude = Math.sqrt((x * x + y * y + z * z).toDouble()).toFloat()
+                accelerationMagnitude = sqrt((x * x + y * y + z * z).toDouble()).toFloat()
                 //Log.d("LocationService", "ACCELEROMETER: $accelerationMagnitude")
             }
 
@@ -117,7 +114,7 @@ class LocationService : Service() {
         val channelId = "location_service_channel"
         val channelName = "Location Service"
         val channel = NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_DEFAULT)
-        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         manager.createNotificationChannel(channel)
         val notification = NotificationCompat.Builder(this, channelId)
             .setContentTitle("Location Service")
