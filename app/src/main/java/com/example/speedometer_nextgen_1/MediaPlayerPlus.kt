@@ -88,7 +88,6 @@ class MediaPlayerPlus(
         if (testsound != null && testsound != 0) {
             soundPool?.play(testsound, indicatorVolume, indicatorVolume, 0, 0, 1.0f)
             Log.w("MediaPlayerPlus", "Audio Played")
-            /*TODO warum spielt dieses AUdio nicht ab?*/
         }
     }
     // Play nur, wenn SoundPool existiert und alle Sounds geladen sind

@@ -162,7 +162,8 @@ class LocationService : Service() {
                     }
 
                     Log.d("LocationService", "Updates sent to LiveData and Listeners.")
-
+                    Log.d("LocationService", "LiveData sent: $speedInt,$speedDecimal")
+                    Log.d("LocationService", "Accuracy: $gpsLocationAccuracy m")
 
 
 /*
@@ -222,5 +223,25 @@ class LocationService : Service() {
             Arrays.sort(sortedSpeeds)
             return sortedSpeeds[historySize / 2]
         }
+    }
+
+    fun triggerTestUpdate() {
+        val testSpeedInt = 49
+        val testSpeedDecimal = "51"
+        val testAcceleration = 41f
+        val testAccuracy = 3f
+
+        // 1. Updates for LiveData (to MainActivity)
+        speedData.postValue(testSpeedInt)
+        speedDecimalData.postValue(testSpeedDecimal)
+        accelerationMagnitudeData.postValue(testAcceleration)
+        gpsLocationAccuracyData.postValue(testAccuracy)
+
+        // 2. Updates for Listeners (to the Audio Service)
+        listeners.forEach {
+            it.onLocationUpdate(testSpeedInt, testSpeedDecimal, testAcceleration, testAccuracy)
+        }
+
+        Log.d("LocationService", "Test update triggered: Speed $testSpeedInt, Decimal $testSpeedDecimal, Accel $testAcceleration, Accuracy $testAccuracy")
     }
 }

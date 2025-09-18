@@ -14,7 +14,7 @@ val appModule = module {
         get<SharedPreferences>().getFloat("backgroundVolume", 0.01f),
         get<SharedPreferences>().getFloat("indicatorVolume", 1f)
     ) }
-    factory { (activity: AppCompatActivity) ->
+   factory { (activity: AppCompatActivity) ->
         VolumeControlManager(
             activity, get(), get(), get<SharedPreferences>().getFloat("backgroundVolume", 0.01f),
             get<SharedPreferences>().getFloat("indicatorVolume", 1f)

@@ -5,11 +5,14 @@ import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.os.Binder
+import android.os.IBinder
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.WindowManager
 import android.widget.SeekBar
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.MutableLiveData
 import com.example.speedometer_nextgen_1.databinding.DialogVolumeControlBinding
 import kotlin.math.pow
 
@@ -18,13 +21,16 @@ class VolumeControlManager(
     private val mediaPlayerPlus: MediaPlayerPlus,
     private val sharedPreferences: SharedPreferences,
     initialBackgroundVolume: Float,
-    initialIndicatorVolume: Float
+    initialIndicatorVolume: Float,
+    var locationService: LocationService? = null // Add this parameter
 ) {
     private var backgroundVolume: Float = initialBackgroundVolume
     private var indicatorVolume: Float = initialIndicatorVolume
     private var logarythmicVolume = backgroundVolume
     private var isDialogActive = false
     private var isVolumeMaxUnlocked = false  // Renamed from isBackgroundSoundMaxUnlocked
+
+
 
     fun getBackgroundVolume(): Float = backgroundVolume
 
@@ -65,6 +71,7 @@ class VolumeControlManager(
 
         dialogBinding.indicatorVolumeSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+
                 // volume=minVolume+(maxVolume−minVolume)×(progress/maxProgress)
                 indicatorVolume = progress / 100.0f
                 mediaPlayerPlus.updateIndicatorVolume(indicatorVolume)
@@ -72,13 +79,16 @@ class VolumeControlManager(
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: SeekBar?) {
                 saveVolume()
-                val intent = Intent("com.example.speedometer_nextgen_1.LOCATION_UPDATE").apply {
+                /*val intent = Intent("com.example.speedometer_nextgen_1.LOCATION_UPDATE").apply {
                     putExtra("speed",50)
                     putExtra("speedDecimal", "55")
                     putExtra("accelerationMagnitude", 55f)
                     putExtra("gpsLocationAccuracy", 55f)
                 }
-                context.sendBroadcast(intent)  // Replacing LocalBroadcastManager
+                context.sendBroadcast(intent)  // Replacing LocalBroadcastManager*/
+
+                locationService?.triggerTestUpdate()
+
             }
         })
 

@@ -59,6 +59,8 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
             val binder = service as LocationService.LocalBinder
             locationService = binder.getService()
             isBound = true
+            // Correct place to set the LocationService on the manager
+            volumeControlManager.locationService = locationService
             // Observer auf die LiveData des Service setzen
             observeLocationData()
         }
