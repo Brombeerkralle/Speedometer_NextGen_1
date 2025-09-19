@@ -315,6 +315,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
         Log.d("MainActivity", "Receiver unregistered in onStop")
     }
 
+
     override fun onDestroy() {
         Log.d("MainActivity", "Receiver Destroyed\n.\n.\n.\n.")
         Toast.makeText(this, "onDestroy", Toast.LENGTH_SHORT).show()
