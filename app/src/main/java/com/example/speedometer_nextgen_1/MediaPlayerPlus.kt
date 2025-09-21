@@ -8,111 +8,84 @@ import android.util.Log
 
 class MediaPlayerPlus(
     private val context: Context,
-    initialBackgroundVolume: Float,
-    initialIndicatorVolume: Float
+    private val initialBackgroundVolume: Float,
+    private val initialIndicatorVolume: Float
 ) {
-
-
     private var soundPool: SoundPool? = null
     private var soundMap: MutableMap<SpeedCategory, Int> = mutableMapOf()
 
     private var backgroundPlayer: MediaPlayer? = null
-    private var backgroundVolume: Float = initialBackgroundVolume // Set initial background volume
-    private var indicatorVolume: Float = initialIndicatorVolume // Set initial background volume
+    private var backgroundVolume: Float = initialBackgroundVolume
+    private var indicatorVolume: Float = initialIndicatorVolume
 
-
-    private var soundsLoaded = false
-    private var soundsToLoad = 0
-    private var soundsLoadedCount = 0
-
-    var onSoundsLoadedListener: (() -> Unit)? = null
+    var soundsLoaded = false
+    private var soundsToLoadCount = 0
+    private val totalSoundsToLoad = 4 // Explicitly set the number of sounds to load
 
     init {
-        loadSounds()
+        setupSoundPoolAndLoadSounds()
+        playSilentAudio()
     }
 
-    fun loadSounds() {
+    /**
+     * Sets up the SoundPool and loads all audio files.
+     * This method is called once during class initialization.
+     */
+    private fun setupSoundPoolAndLoadSounds() {
+        Log.d("MediaPlayerPlus", "Setting up SoundPool and loading sounds...")
         val audioAttributes = AudioAttributes.Builder()
             .setUsage(AudioAttributes.USAGE_MEDIA)
             .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
             .build()
 
-        // SoundPool neu erstellen
-        soundPool?.release()
         soundPool = SoundPool.Builder()
-            .setMaxStreams(4) // You can play up to 3 sounds at the same time
+            .setMaxStreams(4)
             .setAudioAttributes(audioAttributes)
             .build()
 
-        soundsLoaded = false
-        soundsLoadedCount = 0
-
-
-        soundPool?.setOnLoadCompleteListener { _, sampleId, status ->
+        // Listener to track when all sounds are loaded
+        soundPool?.setOnLoadCompleteListener { _, _, status ->
             if (status == 0) {
-                soundsLoadedCount++
-                Log.d("MediaPlayerPlus", "Sound loaded: $sampleId ($soundsLoadedCount/$soundsToLoad)")
-                if (soundsLoadedCount >= soundsToLoad) {
+                soundsToLoadCount++
+                Log.d("MediaPlayerPlus", "Sound loaded. ($soundsToLoadCount/$totalSoundsToLoad)")
+                if (soundsToLoadCount == totalSoundsToLoad) {
                     soundsLoaded = true
-                    Log.d("MediaPlayerPlus", "\n.\n.\n.\n.\n.\n.\n.\n.\n.\n.\n.\n.\n.\n.\n.\nAll sounds loaded\n.\n.\n.\n.\n.\n.\n.\n.\n.\n.\n.\n.\n.\n.\n.\n")
-                    onSoundsLoadedListener?.invoke()  // Callback auslösen
+                    Log.d("MediaPlayerPlus", "All sounds loaded. Ready for playback.")
                 }
             } else {
-                Log.w("MediaPlayerPlus", "Failed to load sound ID: $sampleId")
+                Log.w("MediaPlayerPlus", "Failed to load a sound.")
             }
         }
 
-        // Vorherige Sound Map leeren
-        soundMap.clear()
-
-        // Lade Sounds und zähle nur erfolgreich geladene
-        val loadedIds = listOf(
-            soundPool?.load(context, R.raw.speedupmaestro3, 1) ?: 0,
-            soundPool?.load(context, R.raw.maintainmaestro3, 1) ?: 0,
-            soundPool?.load(context, R.raw.downmaestro3, 1) ?: 0,
-            soundPool?.load(context, R.raw.hintergrundemaestro2, 1) ?: 0
-        )
-
-        soundsToLoad = 0
-
-        SpeedCategory.entries.forEachIndexed { index, category ->
-            val soundId = loadedIds.getOrElse(index) { 0 }
-            if (soundId != 0) {
-                soundMap[category] = soundId
-                soundsToLoad++
-            } else {
-                Log.w("MediaPlayerPlus", "Failed to load sound for category $category")
-            }
-        }
-        val testsound = soundMap[SpeedCategory.UNKNOWN]
-        if (testsound != null && testsound != 0) {
-            soundPool?.play(testsound, indicatorVolume, indicatorVolume, 0, 0, 1.0f)
-            Log.w("MediaPlayerPlus", "Audio Played")
-        }
+        // Load sounds and map them to their corresponding SpeedCategory
+        soundMap[SpeedCategory.SPEEDING_UP] = soundPool?.load(context, R.raw.speedupmaestro3, 1) ?: 0
+        soundMap[SpeedCategory.CRUISING] = soundPool?.load(context, R.raw.maintainmaestro3, 1) ?: 0
+        soundMap[SpeedCategory.SLOWING_DOWN] = soundPool?.load(context, R.raw.downmaestro3, 1) ?: 0
+        soundMap[SpeedCategory.UNKNOWN] = soundPool?.load(context, R.raw.hintergrundemaestro2, 1) ?: 0
     }
-    // Play nur, wenn SoundPool existiert und alle Sounds geladen sind
+
+    /**
+     * Plays a sound effect from the SoundPool for the given SpeedCategory.
+     * This function only attempts to play if the SoundPool and sounds are ready.
+     */
     fun playMusic(speedCategory: SpeedCategory) {
-        if (soundPool == null) {
-            Log.w("MediaPlayerPlus", "SoundPool is null; cannot play sound")
-            // Optionally reinitialize:
-            loadSounds()
-            return
-        }
         if (!soundsLoaded) {
-            Log.w("MediaPlayerPlus", "Sounds not loaded yet")
+            Log.w("MediaPlayerPlus", "Sounds not loaded yet. Cannot play music.")
             return
         }
+
         val soundId = soundMap[speedCategory]
         if (soundId != null && soundId != 0) {
             soundPool?.play(soundId, indicatorVolume, indicatorVolume, 0, 0, 1.0f)
-            Log.w("MediaPlayerPlus", "Audio Played")
+            Log.i("MediaPlayerPlus", "Audio played for category: $speedCategory")
         } else {
-            Log.w("MediaPlayerPlus", "Could not play sound for $speedCategory (ID: $soundId)")
+            Log.e("MediaPlayerPlus", "Could not play sound for $speedCategory (ID: $soundId)")
         }
     }
 
-
-    // Optional: Silent audio im Hintergrund abspielen, um Audio-Fokus zu behalten
+    /**
+     * Plays a silent audio file in the background to maintain audio focus for the app.
+     */
     fun playSilentAudio() {
         if (backgroundPlayer == null) {
             backgroundPlayer = MediaPlayer.create(context, R.raw.hintergrundemaestro2).apply {
@@ -122,9 +95,9 @@ class MediaPlayerPlus(
                         .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                         .build()
                 )
-                setVolume(backgroundVolume, backgroundVolume) // Set appropriate volume
-                isLooping = true  // Loop the background sound
-                start()  // Play the background sound
+                setVolume(backgroundVolume, backgroundVolume)
+                isLooping = true
+                start()
             }
         }
     }
@@ -136,7 +109,6 @@ class MediaPlayerPlus(
 
     fun updateIndicatorVolume(volume: Float) {
         indicatorVolume = volume
-        //Log.d("MediaPlayerPlus", "indicatorVolume $indicatorVolume")
     }
 
     fun releaseBackgroundPlayer() {
@@ -144,7 +116,6 @@ class MediaPlayerPlus(
         backgroundPlayer = null
     }
 
-    // Release resources
     fun release() {
         soundPool?.release()
         soundPool = null

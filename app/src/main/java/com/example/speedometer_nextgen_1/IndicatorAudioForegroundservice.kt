@@ -7,6 +7,7 @@ import android.content.ComponentName
 import android.content.Intent
 import android.content.ServiceConnection
 import android.os.IBinder
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import org.koin.android.ext.android.inject
 
@@ -103,7 +104,11 @@ class IndicatorAudioForegroundservice : Service(), LocationService.LocationUpdat
         if (categoryHasChanged) {
             val speedCategory = speedManagement.getSpeedCategory(speed)
             if (speedCategory != SpeedCategory.UNKNOWN) {
-                mediaPlayerPlus.playMusic(speedCategory)
+                if (mediaPlayerPlus.soundsLoaded) {
+                    mediaPlayerPlus.playMusic(speedCategory)
+                } else {
+                    Log.w("IndicatorAudioService", "MediaPlayerPlus not ready to play sound.")
+                }
             }
         }
     }

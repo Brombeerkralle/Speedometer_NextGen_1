@@ -295,7 +295,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
         Log.d("MainActivity", "onResume - attempting to bind to service")
         val intent = Intent(this, LocationService::class.java)
         bindService(intent, serviceConnection, BIND_AUTO_CREATE)
-        mediaPlayerPlus.loadSounds()
+        //mediaPlayerPlus.loadSounds()
     }
 
     override fun onPause() {
