@@ -89,7 +89,7 @@ class SpeedManagement(context: Context) {
             speed < 80 -> colorUnder80
             else -> colorOver80
         }
-        Log.v("SpeedManagement", "--\n---\n--\nupdateBackgroundColor called with speed $speed, color $color")
+        Log.v("SpeedManagement", "\nupdateBackgroundColor called with speed $speed, color $color")
         updateView(color)
     }
 }

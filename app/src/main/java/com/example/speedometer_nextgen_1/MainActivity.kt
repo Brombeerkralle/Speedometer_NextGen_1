@@ -251,13 +251,16 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
 
     // Function that handles speed changes and calls background color change or music playback
     private fun handleSpeedIndicators(speed: Int) {
+       // Log.w("MainActivity", "handleSpeedIndicators() has been called")
         val speedHasChanged = speedManagement.hasSpeedChanged(speed)
-        val categoryHasChanged = speedManagement.hasCategoryChanged(speed)
-
+        val categoryHasChanged = speedManagement.hasCategoryChangedFlag()
+        Log.w("MainActivity", "handleSpeedIndicators()  called      -       categoryHasChanged = $categoryHasChanged")
         if (categoryHasChanged) {
             binding.infotainmentIDleft.text = getString(R.string.music_indicator_text)
+           // Log.w("MainActivity", "\nmnusic")
         } else {
             binding.infotainmentIDleft.text = " "
+           // Log.w("MainActivity", "\nempty music")
         }
 
         if (speedHasChanged) {

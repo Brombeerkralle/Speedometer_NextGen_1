@@ -130,16 +130,23 @@ class LocationService : Service() {
             override fun onLocationResult(locationResult: LocationResult) {
                 val location = locationResult.lastLocation
                 location?.let {
+                    Log.d("LocationService", "------------START LOCATION CALLBACK-------------")
+                    //Log.d("LocationService", "ACCELEROMETER: $accelerationMagnitude")
+
                     var speedKmH = location.speed * 3.6f // Get the raw speed
                     speedKmH = speedFilter.addSpeed(speedKmH)
-                    Log.d("LocationService", "Realtime Speed: $speedKmH")                    // Use accelerometer to adjust filtering
-                    /*if (accelerationMagnitude > 13) { // Adjust threshold as needed
+
+
+                    //Log.d("LocationService", "Realtime Speed: $speedKmH")                    // Use accelerometer to adjust filtering
+                    if (accelerationMagnitude > 13) { // Adjust threshold as needed
                         // If accelerating, trust the raw speed more
                         // speedKmH is already set to the raw speed.
                     } else {
                         // If not accelerating, apply the median filter
                         speedKmH = speedFilter.addSpeed(speedKmH)
-                    }*/
+                    }
+
+
 
                     val speedInt = speedKmH.toInt()
                     val speedDecimal = "%.1f".format(Locale.US, speedKmH - speedInt).substringAfter('.')
@@ -158,9 +165,9 @@ class LocationService : Service() {
                         it.onLocationUpdate(speedInt, speedDecimal, accelerationMagnitude, gpsLocationAccuracy)
                     }
 
-                    Log.d("LocationService", "Updates sent to LiveData and Listeners.")
-                    Log.d("LocationService", "LiveData sent: $speedInt,$speedDecimal")
-                    Log.d("LocationService", "Accuracy: $gpsLocationAccuracy m")
+                    Log.d("LocationService", "-Updates sent to LiveData and Listeners.")
+                   // Log.d("LocationService", "LiveData sent: $speedInt,$speedDecimal")
+                   // Log.d("LocationService", "Accuracy: $gpsLocationAccuracy m")
 
 
 /*
@@ -177,7 +184,7 @@ class LocationService : Service() {
 
  */
 
-
+                    Log.d("LocationService", "------------END-------------")
                 }
             }
         }
@@ -223,23 +230,28 @@ class LocationService : Service() {
     }
 
     fun triggerTestUpdate() {
-        val testSpeedInt = 49
-        val testSpeedDecimal = "51"
-        val testAcceleration = 41f
-        val testAccuracy = 3f
+        Log.d("LocationService", "------------START TEST -------------")
 
-        // 1. Updates for LiveData (to MainActivity)
-        speedData.postValue(testSpeedInt)
-        speedDecimalData.postValue(testSpeedDecimal)
-        accelerationMagnitudeData.postValue(testAcceleration)
-        gpsLocationAccuracyData.postValue(testAccuracy)
+        val testSpeeds = listOf(20, 26, 30, 34)
+        Thread {
+            testSpeeds.forEach { testSpeed ->
+                val testSpeedInt = testSpeed
+                val testSpeedDecimal = "0"
+                val testAcceleration = 10f
+                val testAccuracy = 3f
+                speedData.postValue(testSpeedInt)
+                speedDecimalData.postValue(testSpeedDecimal)
+                accelerationMagnitudeData.postValue(testAcceleration)
+                gpsLocationAccuracyData.postValue(testAccuracy)
+                listeners.forEach {
+                    it.onLocationUpdate(testSpeedInt, testSpeedDecimal, testAcceleration, testAccuracy)
+                }
+                Log.d("LocationService", "Test update: Speed $testSpeedInt")
+                Thread.sleep(2000)
+            }
+        }.start()
 
-        // 2. Updates for Listeners (to the Audio Service)
-        listeners.forEach {
-            it.onLocationUpdate(testSpeedInt, testSpeedDecimal, testAcceleration, testAccuracy)
-        }
-
-        Log.d("LocationService", "Test update triggered: Speed $testSpeedInt, Decimal $testSpeedDecimal, Accel $testAcceleration, Accuracy $testAccuracy")
+        Log.d("LocationService", "------------END-------------")
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {

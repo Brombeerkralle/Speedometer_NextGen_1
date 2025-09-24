@@ -50,7 +50,7 @@ class MediaPlayerPlus(
                 Log.d("MediaPlayerPlus", "Sound loaded. ($soundsToLoadCount/$totalSoundsToLoad)")
                 if (soundsToLoadCount == totalSoundsToLoad) {
                     soundsLoaded = true
-                    Log.d("MediaPlayerPlus", "All sounds loaded. Ready for playback.")
+                    Log.d("MediaPlayerPlus", "\n.\n.\n.\n.\n.\n.\n.\n.\n.\n.\nAll sounds loaded. Ready for playback.\n.\n.\n.\n.\n.\n.\n.")
                 }
             } else {
                 Log.w("MediaPlayerPlus", "Failed to load a sound.")
