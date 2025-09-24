@@ -2,14 +2,23 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
+    android:gravity="top|center_horizontal"
     android:padding="16dp">
 
     <!-- Warning message initially hidden -->
+
+    <Button
+        android:id="@+id/runSystemTestButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="100dp"
+        android:text="@string/test" />
+
     <SeekBar
         android:id="@+id/indicatorVolumeSeekBar"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="200dp"
+        android:layout_marginTop="50dp"
         android:max="100"
         android:progress="50" />
 

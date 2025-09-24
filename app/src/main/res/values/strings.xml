@@ -1,4 +1,5 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name" tools:ignore="Typos">Speedometer_NextGen_1</string>
     <string name="music_indicator_text">Music</string>
+    <string name="test">Test</string>
 </resources>

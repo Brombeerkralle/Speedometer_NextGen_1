@@ -41,6 +41,10 @@ class VolumeControlManager(
         dialogBinding.backgroundVolumeSeekBar.progress = (backgroundVolume*100).toInt()
         dialogBinding.indicatorVolumeSeekBar.progress = (indicatorVolume*100).toInt()
 
+        dialogBinding.runSystemTestButton.setOnClickListener{
+            locationService?.triggerTestUpdate()
+        }
+
         // Setup SeekBar listener
         dialogBinding.backgroundVolumeSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
@@ -72,16 +76,6 @@ class VolumeControlManager(
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: SeekBar?) {
                 saveVolume()
-                /*val intent = Intent("com.example.speedometer_nextgen_1.LOCATION_UPDATE").apply {
-                    putExtra("speed",50)
-                    putExtra("speedDecimal", "55")
-                    putExtra("accelerationMagnitude", 55f)
-                    putExtra("gpsLocationAccuracy", 55f)
-                }
-                context.sendBroadcast(intent)  // Replacing LocalBroadcastManager*/
-
-                locationService?.triggerTestUpdate()
-
             }
         })
 
