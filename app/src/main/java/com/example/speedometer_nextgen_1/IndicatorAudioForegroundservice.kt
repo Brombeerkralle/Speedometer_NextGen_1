@@ -101,16 +101,16 @@ class IndicatorAudioForegroundservice : Service(), LocationService.LocationUpdat
     // Diese Methode wird jetzt direkt vom LocationService aufgerufen
      override fun onLocationUpdate(speed: Int, speedAsDecimal: String, accelerationMagnitude: Float, gpsLocationAccuracy: Number) {
         val categoryHasChanged = speedManagement.hasCategoryChanged(speed)
-        Log.w("IndicatorAudioService", "                                             categoryHasChanged = $categoryHasChanged")
-        Log.w("IndicatorAudioService", "                                             speed = $speed")
+       // Log.w("IndicatorAudioService", "                                             categoryHasChanged = $categoryHasChanged")
+        Log.w("IndicatorAudioService", "speed = $speed")
         if (categoryHasChanged) {
             val speedCategory = speedManagement.getSpeedCategory(speed)
-            Log.e("IndicatorAudioService", "                                             speedCategory = $speedCategory")
+       //     Log.e("IndicatorAudioService", "                                             speedCategory = $speedCategory")
             if (speedCategory != SpeedCategory.UNKNOWN) {
                 if (mediaPlayerPlus.soundsLoaded) {
                     mediaPlayerPlus.playMusic(speedCategory)
                 } else {
-                    Log.w("IndicatorAudioService", "MediaPlayerPlus not ready to play sound.")
+        //            Log.w("IndicatorAudioService", "MediaPlayerPlus not ready to play sound.")
                 }
             }
         }

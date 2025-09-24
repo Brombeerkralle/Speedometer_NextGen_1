@@ -254,7 +254,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
        // Log.w("MainActivity", "handleSpeedIndicators() has been called")
         val speedHasChanged = speedManagement.hasSpeedChanged(speed)
         val categoryHasChanged = speedManagement.hasCategoryChangedFlag()
-        Log.w("MainActivity", "handleSpeedIndicators()  called      -       categoryHasChanged = $categoryHasChanged")
+        //Log.w("MainActivity", "handleSpeedIndicators()  called      -       categoryHasChanged = $categoryHasChanged")
         if (categoryHasChanged) {
             binding.infotainmentIDleft.text = getString(R.string.music_indicator_text)
            // Log.w("MainActivity", "\nmnusic")

@@ -165,7 +165,7 @@ class LocationService : Service() {
                         it.onLocationUpdate(speedInt, speedDecimal, accelerationMagnitude, gpsLocationAccuracy)
                     }
 
-                    Log.d("LocationService", "-Updates sent to LiveData and Listeners.")
+                    //Log.d("LocationService", "-Updates sent to LiveData and Listeners.")
                    // Log.d("LocationService", "LiveData sent: $speedInt,$speedDecimal")
                    // Log.d("LocationService", "Accuracy: $gpsLocationAccuracy m")
 
@@ -184,7 +184,7 @@ class LocationService : Service() {
 
  */
 
-                    Log.d("LocationService", "------------END-------------")
+                    //Log.d("LocationService", "------------END-------------")
                 }
             }
         }
