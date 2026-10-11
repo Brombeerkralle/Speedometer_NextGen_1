@@ -5,10 +5,12 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import kotlin.math.abs
 
+data class SpeedStatus(val category: SpeedCategory, val targetSpeed: Int? = null)
+
 class SpeedManagement(context: Context) {
 
     var previousSpeed: Int? = null
-    private var previousCategory: SpeedCategory? = null
+    private var previousStatus: SpeedStatus? = null
     private var categoryChangedFlag = false
 
     private val colorUnder30 = ContextCompat.getColor(context, R.color.yellow)
@@ -19,21 +21,46 @@ class SpeedManagement(context: Context) {
 
 
     // Multiple ideal cruise speeds
-    private val idealCruiseSpeeds = listOf(30, 50, 70, 80)  // Define multiple ideal cruise speeds here
+    val idealCruiseSpeeds = listOf(30, 50, 70, 80)  // Define multiple ideal cruise speeds here
     private val belowCruiseMargin = 3  // Margin below the ideal cruise speed
     private val aboveCruiseMargin = 2  // Margin above the ideal cruise speed
     private val speedUpMargin = 5       // Range below cruise for speeding up
     private val slowDownMargin = 5      // Range above cruise for slowing down
 
-    fun getSpeedCategory(speed: Int): SpeedCategory {
+    fun getSpeedStatus(speed: Int): SpeedStatus {
         for (idealCruise in idealCruiseSpeeds) {
             when {
-                speed in getSpeedingUpRange(idealCruise) -> return SpeedCategory.SPEEDING_UP
-                speed in getCruisingRange(idealCruise) -> return SpeedCategory.CRUISING
-                speed in getSlowingDownRange(idealCruise) -> return SpeedCategory.SLOWING_DOWN
+                speed in getSpeedingUpRange(idealCruise) -> return SpeedStatus(SpeedCategory.SPEEDING_UP, idealCruise)
+                speed in getCruisingRange(idealCruise) -> return SpeedStatus(SpeedCategory.CRUISING, idealCruise)
+                speed in getSlowingDownRange(idealCruise) -> return SpeedStatus(SpeedCategory.SLOWING_DOWN, idealCruise)
             }
         }
-        return SpeedCategory.UNKNOWN
+        return SpeedStatus(SpeedCategory.UNKNOWN)
+    }
+
+    // Function to check if the speed has changed significantly
+    fun hasSpeedChanged(currentSpeed: Int): Boolean {
+        val changed = previousSpeed == null || abs(currentSpeed - (previousSpeed ?: 0)) > 1
+        if (changed) previousSpeed = currentSpeed
+        return changed
+    }
+
+    // Function to check if the speed category or target speed has changed
+    fun hasCategoryChanged(speed: Int): Boolean {
+        val currentStatus = getSpeedStatus(speed)
+        if (currentStatus != previousStatus) {
+            previousStatus = currentStatus
+            categoryChangedFlag = true
+            return true
+        }
+        else if (categoryChangedFlag) {
+            categoryChangedFlag = false
+        }
+        return false
+    }
+
+    fun hasCategoryChangedFlag(): Boolean {
+        return categoryChangedFlag
     }
 
     // Calculate the cruising range with asymmetrical margins
@@ -51,35 +78,6 @@ class SpeedManagement(context: Context) {
         return (idealCruise + aboveCruiseMargin + 1)..(idealCruise + aboveCruiseMargin + slowDownMargin)
     }
 
-
-
-
-    // Function to check if the speed has changed significantly
-    fun hasSpeedChanged(currentSpeed: Int): Boolean {
-        val changed = previousSpeed == null || abs(currentSpeed - (previousSpeed ?: 0)) > 1
-        if (changed) previousSpeed = currentSpeed
-        //Log.v("SpeedManagement", "--\n--\n--\nHs Speed Changed?: $changed\n--\n--\n")
-        return changed
-    }
-
-    // Function to check if the speed category has changed
-    fun hasCategoryChanged(speed: Int): Boolean {
-        val currentCategory = getSpeedCategory(speed)
-        if (currentCategory != previousCategory) {
-            previousCategory = currentCategory
-            categoryChangedFlag = true
-            return true
-        }
-        else if (categoryChangedFlag) {
-            categoryChangedFlag = false
-        }
-        return false
-    }
-
-    fun hasCategoryChangedFlag(): Boolean {
-        return categoryChangedFlag
-    }
-
     // Function to update the background color based on the speed
     fun updateBackgroundColor(speed: Int, updateView: (Int) -> Unit) {
         val color = when {
@@ -92,6 +90,9 @@ class SpeedManagement(context: Context) {
         Log.v("SpeedManagement", "\nupdateBackgroundColor called with speed $speed, color $color")
         updateView(color)
     }
+
+    // Compatibility method
+    fun getSpeedCategory(speed: Int): SpeedCategory = getSpeedStatus(speed).category
 }
 
 // Enum for Speed Categories

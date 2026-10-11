@@ -279,6 +279,39 @@ class LocationService : Service() {
         Log.d("LocationService", "------------END-------------")
     }
 
+    fun triggerFullAudioTest() {
+        Log.d("LocationService", "------------START FULL AUDIO TEST -------------")
+        // Sequence to trigger all levels: SU, C, SD for 30, 50, 70, 80
+        // We use speeds that clearly fall into the specific ranges defined in SpeedManagement.
+        val sequence = listOf(
+            24, 30, 35, // 30: Speeding Up, Cruising, Slowing Down
+            0,
+            44, 50, 55, // 50: Speeding Up, Cruising, Slowing Down
+            0,
+            64, 70, 75, // 70: Speeding Up, Cruising, Slowing Down
+            0,
+            74, 80, 85  // 80: Speeding Up, Cruising, Slowing Down
+        )
+
+        Thread {
+            sequence.forEach { testSpeed ->
+                val testSpeedInt = testSpeed
+                val testSpeedDecimal = "0"
+                val testAcceleration = 10f
+                val testAccuracy = 3f
+                speedData.postValue(testSpeedInt)
+                speedDecimalData.postValue(testSpeedDecimal)
+                accelerationMagnitudeData.postValue(testAcceleration)
+                gpsLocationAccuracyData.postValue(testAccuracy)
+                listeners.forEach {
+                    it.onLocationUpdate(testSpeedInt, testSpeedDecimal, testAcceleration, testAccuracy)
+                }
+                Log.d("LocationService", "Full Test update: Speed $testSpeedInt")
+                Thread.sleep(2500)
+            }
+        }.start()
+    }
+
     override fun onTaskRemoved(rootIntent: Intent?) {
         // Stop the service and remove the notification
         stopSelf()

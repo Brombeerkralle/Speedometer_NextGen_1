@@ -14,7 +14,7 @@ class MediaPlayerPlus(
     private val initialIndicatorVolume: Float
 ) {
     private var soundPool: SoundPool? = null
-    private var soundMap: MutableMap<SpeedCategory, Int> = mutableMapOf()
+    private var soundMap: MutableMap<String, Int> = mutableMapOf()
 
     private var backgroundPlayer: MediaPlayer? = null
     private var backgroundVolume: Float = initialBackgroundVolume
@@ -22,13 +22,22 @@ class MediaPlayerPlus(
 
     var soundsLoaded = false
     private var soundsToLoadCount = 0
-    private val totalSoundsToLoad = 4
+    private var totalSoundsToLoad = 0
 
     private val audioPrefs: SharedPreferences = context.getSharedPreferences("audio_settings", Context.MODE_PRIVATE)
+    private val idealCruiseSpeeds = listOf(30, 50, 70, 80)
 
     init {
         setupSoundPoolAndLoadSounds()
         playSilentAudio()
+    }
+
+    private fun getSoundKey(category: SpeedCategory, targetSpeed: Int?): String {
+        return if (targetSpeed == null || category == SpeedCategory.UNKNOWN) {
+            category.name
+        } else {
+            "${category.name}_$targetSpeed"
+        }
     }
 
     private fun setupSoundPoolAndLoadSounds() {
@@ -39,60 +48,61 @@ class MediaPlayerPlus(
             .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
             .build()
 
+        val categories = listOf(SpeedCategory.SPEEDING_UP, SpeedCategory.CRUISING, SpeedCategory.SLOWING_DOWN)
+        totalSoundsToLoad = (categories.size * idealCruiseSpeeds.size) + 1 // +1 for background
+
         soundPool = SoundPool.Builder()
-            .setMaxStreams(4)
+            .setMaxStreams(10)
             .setAudioAttributes(audioAttributes)
             .build()
 
         soundPool?.setOnLoadCompleteListener { _, _, status ->
             if (status == 0) {
                 soundsToLoadCount++
-                if (soundsToLoadCount == totalSoundsToLoad) {
+                if (soundsToLoadCount >= totalSoundsToLoad) {
                     soundsLoaded = true
-                    Log.i("MediaPlayerPlus", "All 4 sounds loaded successfully.")
+                    Log.i("MediaPlayerPlus", "All sounds loaded successfully ($soundsToLoadCount).")
                 }
             }
         }
 
-        loadCategorySound(SpeedCategory.SPEEDING_UP, R.raw.speedupmaestro3)
-        loadCategorySound(SpeedCategory.CRUISING, R.raw.maintainmaestro3)
-        loadCategorySound(SpeedCategory.SLOWING_DOWN, R.raw.downmaestro3)
-        loadCategorySound(SpeedCategory.UNKNOWN, R.raw.hintergrundemaestro2)
+        // Load background sound
+        loadSound(SpeedCategory.UNKNOWN, null, R.raw.hintergrundemaestro2)
+
+        // Load sounds for each category and ideal speed
+        for (speed in idealCruiseSpeeds) {
+            loadSound(SpeedCategory.SPEEDING_UP, speed, R.raw.speedupmaestro3)
+            loadSound(SpeedCategory.CRUISING, speed, R.raw.maintainmaestro3)
+            loadSound(SpeedCategory.SLOWING_DOWN, speed, R.raw.downmaestro3)
+        }
     }
 
-    fun playMusic(speedCategory: SpeedCategory) {
-        if (!soundsLoaded || !isCategoryEnabled(speedCategory)) {
-            Log.w("MediaPlayerPlus", "Sound for $speedCategory skipped (Loaded: $soundsLoaded, Enabled: ${isCategoryEnabled(speedCategory)})")
+    fun playMusic(category: SpeedCategory, targetSpeed: Int? = null) {
+        if (!soundsLoaded || !isSoundEnabled(category, targetSpeed)) {
             return
         }
 
-        val soundId = soundMap[speedCategory]
+        val key = getSoundKey(category, targetSpeed)
+        val soundId = soundMap[key]
         if (soundId != null && soundId != 0) {
             soundPool?.play(soundId, indicatorVolume, indicatorVolume, 0, 0, 1.0f)
-            Log.i("MediaPlayerPlus", "Audio played for category: $speedCategory")
-        } else {
-            Log.e("MediaPlayerPlus", "Could not play sound for $speedCategory (ID: $soundId)")
+            Log.i("MediaPlayerPlus", "Audio played for: $key")
         }
     }
 
     fun playSilentAudio() {
         if (backgroundPlayer != null) return
-        if (!isCategoryEnabled(SpeedCategory.UNKNOWN)) {
-            Log.d("MediaPlayerPlus", "Background audio disabled, not playing.")
-            return
-        }
+        if (!isSoundEnabled(SpeedCategory.UNKNOWN, null)) return
 
-        val customFile = getCustomSoundFile(SpeedCategory.UNKNOWN)
+        val customFile = getCustomSoundFile(SpeedCategory.UNKNOWN, null)
         
         try {
             backgroundPlayer = if (customFile.exists()) {
-                Log.d("MediaPlayerPlus", "Playing custom background sound from ${customFile.absolutePath}")
                 MediaPlayer().apply {
                     setDataSource(customFile.absolutePath)
                     prepare()
                 }
             } else {
-                Log.d("MediaPlayerPlus", "Playing default background sound")
                 MediaPlayer.create(context, R.raw.hintergrundemaestro2)
             }
 
@@ -108,72 +118,49 @@ class MediaPlayerPlus(
                 start()
             }
         } catch (e: Exception) {
-            Log.e("MediaPlayerPlus", "Error initializing background player", e)
-            // Fallback to default if custom fails
-            if (customFile.exists()) {
-                 backgroundPlayer = MediaPlayer.create(context, R.raw.hintergrundemaestro2).apply {
-                    setVolume(backgroundVolume, backgroundVolume)
-                    isLooping = true
-                    start()
-                }
-            }
+            Log.e("MediaPlayerPlus", "Error background player", e)
         }
     }
 
-    fun isCategoryEnabled(category: SpeedCategory): Boolean {
-        return audioPrefs.getBoolean("enabled_${category.name}", true)
+    fun isSoundEnabled(category: SpeedCategory, targetSpeed: Int?): Boolean {
+        val key = getSoundKey(category, targetSpeed)
+        return audioPrefs.getBoolean("enabled_$key", true)
     }
 
-    fun setCategoryEnabled(category: SpeedCategory, enabled: Boolean) {
-        audioPrefs.edit().putBoolean("enabled_${category.name}", enabled).apply()
-        Log.d("MediaPlayerPlus", "Category ${category.name} set to enabled=$enabled")
+    fun setSoundEnabled(category: SpeedCategory, targetSpeed: Int?, enabled: Boolean) {
+        val key = getSoundKey(category, targetSpeed)
+        audioPrefs.edit().putBoolean("enabled_$key", enabled).apply()
         if (category == SpeedCategory.UNKNOWN) {
-            if (enabled) {
-                playSilentAudio()
-            } else {
-                releaseBackgroundPlayer()
-            }
+            if (enabled) playSilentAudio() else releaseBackgroundPlayer()
         }
     }
 
-    private fun getCustomSoundFile(category: SpeedCategory): File {
-        val fileName = when (category) {
-            SpeedCategory.SPEEDING_UP -> "custom_speed_up.mp3"
-            SpeedCategory.CRUISING -> "custom_cruising.mp3"
-            SpeedCategory.SLOWING_DOWN -> "custom_slowing_down.mp3"
-            SpeedCategory.UNKNOWN -> "custom_background.mp3"
-        }
-        return File(context.filesDir, fileName)
+    fun getCustomSoundFile(category: SpeedCategory, targetSpeed: Int?): File {
+        val key = getSoundKey(category, targetSpeed)
+        return File(context.filesDir, "custom_$key.mp3")
     }
 
-    private fun loadCategorySound(category: SpeedCategory, fallbackRawId: Int) {
-        val customFile = getCustomSoundFile(category)
+    private fun loadSound(category: SpeedCategory, targetSpeed: Int?, fallbackRawId: Int) {
+        val customFile = getCustomSoundFile(category, targetSpeed)
+        val key = getSoundKey(category, targetSpeed)
 
         val soundId = if (customFile.exists()) {
-            Log.d("MediaPlayerPlus", "Loading custom sound for $category")
             soundPool?.load(customFile.absolutePath, 1) ?: 0
         } else {
-            Log.d("MediaPlayerPlus", "Loading default sound for $category")
             soundPool?.load(context, fallbackRawId, 1) ?: 0
         }
 
-        soundMap[category] = soundId
+        soundMap[key] = soundId
     }
 
     fun reloadSounds() {
-        Log.d("MediaPlayerPlus", "Reloading all sounds...")
         soundsLoaded = false
         soundsToLoadCount = 0
         soundMap.clear()
-        
-        // Release background player if it exists to allow reloading the file
         releaseBackgroundPlayer()
-        
         soundPool?.release()
         setupSoundPoolAndLoadSounds()
-        
-        // Restart background audio if enabled
-        if (isCategoryEnabled(SpeedCategory.UNKNOWN)) {
+        if (isSoundEnabled(SpeedCategory.UNKNOWN, null)) {
             playSilentAudio()
         }
     }

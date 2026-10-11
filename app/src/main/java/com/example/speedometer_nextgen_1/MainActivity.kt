@@ -56,6 +56,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
     }
 
     private var pendingCategory: SpeedCategory? = null
+    private var pendingTargetSpeed: Int? = null
 
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
@@ -102,77 +103,87 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
 
     private fun showAudioPopupMenu(view: android.view.View) {
         val popup = PopupMenu(this, view)
-        popup.menuInflater.inflate(R.menu.audio_selection_menu, popup.menu)
-
         val menu = popup.menu
-        val categoryMap = mapOf(
-            R.id.menu_speed_up to SpeedCategory.SPEEDING_UP,
-            R.id.menu_cruising to SpeedCategory.CRUISING,
-            R.id.menu_slow_down to SpeedCategory.SLOWING_DOWN,
-            R.id.menu_background to SpeedCategory.UNKNOWN
-        )
 
-        for (i in 0 until menu.size()) {
-            val item = menu.getItem(i)
-            val category = categoryMap[item.itemId] ?: continue
-            
-            val isEnabled = mediaPlayerPlus.isCategoryEnabled(category)
-            val hasCustom = isCustomSoundPresent(category)
-            
-            val statusIcon = if (isEnabled) "●" else "○"
-            val customIcon = if (hasCustom) " ✓" else ""
-            
-            val newTitle = "$statusIcon ${item.title}$customIcon"
-            val spanString = SpannableString(newTitle)
-            
-            if (isEnabled) {
-                spanString.setSpan(ForegroundColorSpan(Color.GREEN), 0, 1, 0)
-            } else {
-                spanString.setSpan(ForegroundColorSpan(Color.RED), 0, 1, 0)
-            }
-            
-            item.title = spanString
-        }
-
-        popup.setOnMenuItemClickListener { item ->
-            val category = categoryMap[item.itemId]
-            if (category != null) {
-                showCategoryOptions(category)
-            }
+        // Background Sound Option
+        val bgItem = menu.add("Hintergrund Sound")
+        updateMenuItemStyle(bgItem, SpeedCategory.UNKNOWN, null)
+        bgItem.setOnMenuItemClickListener {
+            showCategoryOptions(SpeedCategory.UNKNOWN, null)
             true
         }
+
+        // Dynamic Speed Levels
+        speedManagement.idealCruiseSpeeds.forEach { speed ->
+            val subMenu = menu.addSubMenu("Level: $speed km/h")
+            
+            val upItem = subMenu.add("Beschleunigen auf $speed")
+            updateMenuItemStyle(upItem, SpeedCategory.SPEEDING_UP, speed)
+            upItem.setOnMenuItemClickListener {
+                showCategoryOptions(SpeedCategory.SPEEDING_UP, speed)
+                true
+            }
+
+            val cruiseItem = subMenu.add("Cruising bei $speed")
+            updateMenuItemStyle(cruiseItem, SpeedCategory.CRUISING, speed)
+            cruiseItem.setOnMenuItemClickListener {
+                showCategoryOptions(SpeedCategory.CRUISING, speed)
+                true
+            }
+
+            val downItem = subMenu.add("Bremsen ab $speed")
+            updateMenuItemStyle(downItem, SpeedCategory.SLOWING_DOWN, speed)
+            downItem.setOnMenuItemClickListener {
+                showCategoryOptions(SpeedCategory.SLOWING_DOWN, speed)
+                true
+            }
+        }
+
         popup.show()
     }
 
-    private fun showCategoryOptions(category: SpeedCategory) {
-        val isEnabled = mediaPlayerPlus.isCategoryEnabled(category)
-        val hasCustom = isCustomSoundPresent(category)
+    private fun updateMenuItemStyle(item: android.view.MenuItem, category: SpeedCategory, targetSpeed: Int?) {
+        val isEnabled = mediaPlayerPlus.isSoundEnabled(category, targetSpeed)
+        val hasCustom = isCustomSoundPresent(category, targetSpeed)
+        
+        val statusIcon = if (isEnabled) "●" else "○"
+        val customIcon = if (hasCustom) " ✓" else ""
+        
+        val newTitle = "$statusIcon ${item.title}$customIcon"
+        val spanString = SpannableString(newTitle)
+        
+        spanString.setSpan(ForegroundColorSpan(if (isEnabled) Color.GREEN else Color.RED), 0, 1, 0)
+        item.title = spanString
+    }
+
+    private fun showCategoryOptions(category: SpeedCategory, targetSpeed: Int?) {
+        val isEnabled = mediaPlayerPlus.isSoundEnabled(category, targetSpeed)
+        val hasCustom = isCustomSoundPresent(category, targetSpeed)
         
         val options = mutableListOf<String>()
-        options.add(if (isEnabled) "Disable Sound" else "Enable Sound")
-        options.add("Select New Sound File")
+        options.add(if (isEnabled) "Sound deaktivieren" else "Sound aktivieren")
+        options.add("Neue Audio-Datei wählen")
         if (hasCustom) {
-            options.add("Reset to Default Sound")
+            options.add("Auf Standard zurücksetzen")
         }
 
-        val categoryName = category.name.replace("_", " ").lowercase()
-            .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+        val title = if (targetSpeed != null) "${category.name} ($targetSpeed km/h)" else "Hintergrund"
 
         AlertDialog.Builder(this)
-            .setTitle("$categoryName Settings")
+            .setTitle(title)
             .setItems(options.toTypedArray()) { _, which ->
                 when (which) {
                     0 -> {
-                        mediaPlayerPlus.setCategoryEnabled(category, !isEnabled)
-                        Toast.makeText(this, "$categoryName ${if (!isEnabled) "enabled" else "disabled"}", Toast.LENGTH_SHORT).show()
+                        mediaPlayerPlus.setSoundEnabled(category, targetSpeed, !isEnabled)
+                        Toast.makeText(this, "$title ${if (!isEnabled) "aktiviert" else "deaktiviert"}", Toast.LENGTH_SHORT).show()
                     }
-                    1 -> openAudioPicker(category)
+                    1 -> openAudioPicker(category, targetSpeed)
                     2 -> {
-                        val file = File(filesDir, getFileNameForCategory(category))
+                        val file = mediaPlayerPlus.getCustomSoundFile(category, targetSpeed)
                         if (file.exists()) {
                             file.delete()
                             mediaPlayerPlus.reloadSounds()
-                            Toast.makeText(this, "Reset to default", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this, "Standard wiederhergestellt", Toast.LENGTH_SHORT).show()
                         }
                     }
                 }
@@ -180,15 +191,16 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
             .show()
     }
 
-    private fun openAudioPicker(category: SpeedCategory) {
+    private fun openAudioPicker(category: SpeedCategory, targetSpeed: Int?) {
         pendingCategory = category
+        pendingTargetSpeed = targetSpeed
         audioPickerLauncher.launch("audio/*")
     }
 
     private fun handleSelectedAudio(uri: Uri) {
         val category = pendingCategory ?: return
-        val fileName = getFileNameForCategory(category)
-        val destinationFile = File(filesDir, fileName)
+        val targetSpeed = pendingTargetSpeed
+        val destinationFile = mediaPlayerPlus.getCustomSoundFile(category, targetSpeed)
 
         try {
             contentResolver.openInputStream(uri)?.use { input ->
@@ -196,26 +208,17 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
                     input.copyTo(output)
                 }
             }
-            Log.d("AudioSetup", "Saved sound for ${category.name}")
-            Toast.makeText(this, "Sound for ${category.name} updated! ✓", Toast.LENGTH_SHORT).show()
+            Log.d("AudioSetup", "Saved sound for ${category.name} speed $targetSpeed")
+            Toast.makeText(this, "Sound aktualisiert! ✓", Toast.LENGTH_SHORT).show()
             mediaPlayerPlus.reloadSounds()
         } catch (e: Exception) {
-            Log.e("MainActivity", "Error saving audio for $category", e)
-            Toast.makeText(this, "Error saving audio!", Toast.LENGTH_SHORT).show()
+            Log.e("MainActivity", "Error saving audio", e)
+            Toast.makeText(this, "Fehler beim Speichern!", Toast.LENGTH_SHORT).show()
         }
     }
 
-    private fun isCustomSoundPresent(category: SpeedCategory): Boolean {
-        return File(filesDir, getFileNameForCategory(category)).exists()
-    }
-
-    private fun getFileNameForCategory(category: SpeedCategory): String {
-        return when (category) {
-            SpeedCategory.SPEEDING_UP -> "custom_speed_up.mp3"
-            SpeedCategory.CRUISING -> "custom_cruising.mp3"
-            SpeedCategory.SLOWING_DOWN -> "custom_slowing_down.mp3"
-            SpeedCategory.UNKNOWN -> "custom_background.mp3"
-        }
+    private fun isCustomSoundPresent(category: SpeedCategory, targetSpeed: Int?): Boolean {
+        return mediaPlayerPlus.getCustomSoundFile(category, targetSpeed).exists()
     }
 
     private fun initializeLayout() {
