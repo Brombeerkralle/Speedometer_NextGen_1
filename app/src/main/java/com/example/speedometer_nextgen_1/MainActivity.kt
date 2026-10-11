@@ -34,7 +34,13 @@ import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
 import android.content.ServiceConnection
+import android.net.Uri
 import android.os.IBinder
+import androidx.activity.result.contract.ActivityResultContracts
+import java.io.File
+import android.text.SpannableString
+import android.text.style.ForegroundColorSpan
+import android.graphics.Color
 
 // Oben bei den Konstanten oder als top-level
 private const val ACTION_EXTERNAL_SHUTDOWN = "com.example.speedometer_nextgen_1.FORCE_SHUTDOWN"
@@ -50,6 +56,17 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
 
     private var locationService: LocationService? = null
     private var isBound = false
+
+
+    private val audioPickerLauncher = registerForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let { handleSelectedAudio(it) }
+    }
+
+    // 2. Variable um zu merken, für welche Kategorie wir gerade wählen
+    private var pendingCategory: SpeedCategory? = null
+
 
 
     private val serviceConnection = object : ServiceConnection {
@@ -147,16 +164,6 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
         otherInits()
 
 
-        // Button to open the menu
-        val menuButton = findViewById<Button>(R.id.menuButton)
-        menuButton.setOnClickListener {
-            val popupMenu = PopupMenu(this, menuButton)
-            popupMenu.menuInflater.inflate(R.menu.main_menu, popupMenu.menu)
-            popupMenu.setOnMenuItemClickListener { item ->
-                onOptionsItemSelected(item)
-            }
-            popupMenu.show()
-        }
 
         // Setup button to open volume control
         findViewById<Button>(R.id.openVolumeControlButton).setOnClickListener {
@@ -164,9 +171,54 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
         }
 
         findViewById<Button>(R.id.destroyApp).setOnClickListener {
-            finish()
+            // finishAndRemoveTask() sorgt dafür, dass die App auch aus der
+            // "Letzte Apps"-Liste verschwindet und onDestroy() sauber durchläuft.
+            finishAndRemoveTask()
         }
 
+        binding.menuButton.setOnClickListener { view ->
+            val popup = PopupMenu(this, view)
+            popup.menuInflater.inflate(R.menu.audio_selection_menu, popup.menu)
+
+            val menu = popup.menu
+            val categoryMap = mapOf(
+                R.id.menu_speed_up to SpeedCategory.SPEEDING_UP,
+                R.id.menu_cruising to SpeedCategory.CRUISING,
+                R.id.menu_slow_down to SpeedCategory.SLOWING_DOWN,
+                R.id.menu_background to SpeedCategory.UNKNOWN
+            )
+
+            for (i in 0 until menu.size()) {
+                val item = menu.getItem(i)
+                val category = categoryMap[item.itemId]
+
+                if (category != null && isCustomSoundPresent(category)) {
+                    // 1. Text mit Häkchen versehen
+                    val newTitle = "✓ ${item.title}"
+
+                    // 2. Farbe auf Grün setzen mittels SpannableString
+                    val spanString = SpannableString(newTitle)
+                    spanString.setSpan(
+                        ForegroundColorSpan(Color.GREEN),
+                        0,
+                        spanString.length,
+                        0
+                    )
+                    item.title = spanString
+                }
+            }
+
+            popup.setOnMenuItemClickListener { item ->
+                when (item.itemId) {
+                    R.id.menu_speed_up -> openAudioPicker(SpeedCategory.SPEEDING_UP)
+                    R.id.menu_cruising -> openAudioPicker(SpeedCategory.CRUISING)
+                    R.id.menu_slow_down -> openAudioPicker(SpeedCategory.SLOWING_DOWN)
+                    R.id.menu_background -> openAudioPicker(SpeedCategory.UNKNOWN)
+                }
+                true
+            }
+            popup.show()
+        }
     }
 
 
@@ -246,22 +298,6 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
         }
     }*/
 
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.main_menu, menu)
-        return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            R.id.action_debug_settings -> {
-                // Start DebugSettingsActivity when the menu item is clicked
-                val intent = Intent(this, DebugSettingsActivity::class.java)
-                startActivity(intent)
-                true
-            }
-            else -> super.onOptionsItemSelected(item)
-        }
-    }
 
     // Function that handles speed changes and calls background color change or music playback
     private fun handleSpeedIndicators(speed: Int) {
@@ -286,6 +322,57 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
         }
     }
 
+    /*
+ * AUDIO SYSTEM: Konsolidierte Logik für Kategorien
+ * Dieser Block ersetzt alle doppelten Picker-Definitionen
+ */
+
+    private fun openAudioPicker(category: SpeedCategory) {
+        pendingCategory = category
+        audioPickerLauncher.launch("audio/*")
+    }
+
+    private fun handleSelectedAudio(uri: Uri) {
+        val category = pendingCategory ?: return
+
+        // Einheitliche Dateinamen-Vergabe über eine Hilfsfunktion
+        val fileName = getFileNameForCategory(category)
+        val destinationFile = File(filesDir, fileName)
+
+        try {
+            contentResolver.openInputStream(uri)?.use { input ->
+                destinationFile.outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            }
+
+            Log.d("AudioSetup", "Datei für ${category.name} gespeichert: ${destinationFile.absolutePath}")
+            Toast.makeText(this, "Sound für ${category.name} aktualisiert! ✓", Toast.LENGTH_SHORT).show()
+
+            // Benachrichtigt den Player, dass neue Dateien auf dem Speicher liegen
+            mediaPlayerPlus.reloadSounds()
+
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Fehler beim Speichern der Audio-Datei für $category", e)
+            Toast.makeText(this, "Fehler beim Speichern!", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun isCustomSoundPresent(category: SpeedCategory): Boolean {
+        return File(filesDir, getFileNameForCategory(category)).exists()
+    }
+
+    // Zentrale Verwaltung der Dateinamen, um Fehler zu vermeiden
+    private fun getFileNameForCategory(category: SpeedCategory): String {
+        return when (category) {
+            SpeedCategory.SPEEDING_UP -> "custom_speed_up.mp3"
+            SpeedCategory.CRUISING -> "custom_cruising.mp3"
+            SpeedCategory.SLOWING_DOWN -> "custom_slow_down.mp3"
+            SpeedCategory.UNKNOWN -> "custom_background.mp3"
+        }
+    }
+
+    /* ENDE AUDIO SYSTEM */
 
 
     override fun onPermissionsDenied(requestCode: Int, perms: MutableList<String>) {
@@ -315,7 +402,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
         //mediaPlayerPlus.loadSounds()
     }
 
-    // Innerhalb der MainActivity Klasse
+
     private val shutdownReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == ACTION_EXTERNAL_SHUTDOWN) {

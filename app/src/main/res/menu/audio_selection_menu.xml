@@ -1,0 +1,20 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!-- Using a group for logical organization -->
+    <!-- checkableBehavior="single" makes it act like a radio group -->
+    <group android:id="@+id/group_sound_states" android:checkableBehavior="single">
+
+        <item android:id="@+id/menu_speed_up" android:title="@string/menu_sound_speed_up"
+            app:showAsAction="never" />
+
+        <item android:id="@+id/menu_cruising" android:title="@string/menu_sound_cruising"
+            app:showAsAction="never" />
+
+        <item android:id="@+id/menu_slow_down" android:title="@string/menu_sound_slow_down"
+            app:showAsAction="never" />
+    </group>
+
+    <item android:id="@+id/menu_background" android:title="@string/menu_sound_background"
+        app:showAsAction="never" />
+</menu>

@@ -5,6 +5,7 @@ import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.media.SoundPool
 import android.util.Log
+import java.io.File
 
 class MediaPlayerPlus(
     private val context: Context,
@@ -33,6 +34,8 @@ class MediaPlayerPlus(
      */
     private fun setupSoundPoolAndLoadSounds() {
         Log.d("MediaPlayerPlus", "Setting up SoundPool and loading sounds...")
+
+// ... AudioAttributes und SoundPool Initialisierung bleibt gleich ...
         val audioAttributes = AudioAttributes.Builder()
             .setUsage(AudioAttributes.USAGE_MEDIA)
             .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
@@ -43,26 +46,24 @@ class MediaPlayerPlus(
             .setAudioAttributes(audioAttributes)
             .build()
 
-        // Listener to track when all sounds are loaded
         soundPool?.setOnLoadCompleteListener { _, _, status ->
             if (status == 0) {
                 soundsToLoadCount++
-                Log.d("MediaPlayerPlus", "Sound loaded. ($soundsToLoadCount/$totalSoundsToLoad)")
                 if (soundsToLoadCount == totalSoundsToLoad) {
                     soundsLoaded = true
-                    Log.d("MediaPlayerPlus", "\n.\n.\n.\n.\n.\n.\n.\n.\n.\n.\nAll sounds loaded. Ready for playback.\n.\n.\n.\n.\n.\n.\n.")
+                    Log.i("MediaPlayerPlus", "All 4 sounds loaded successfully.")
                 }
-            } else {
-                Log.w("MediaPlayerPlus", "Failed to load a sound.")
             }
         }
 
-        // Load sounds and map them to their corresponding SpeedCategory
-        soundMap[SpeedCategory.SPEEDING_UP] = soundPool?.load(context, R.raw.speedupmaestro3, 1) ?: 0
-        soundMap[SpeedCategory.CRUISING] = soundPool?.load(context, R.raw.maintainmaestro3, 1) ?: 0
-        soundMap[SpeedCategory.SLOWING_DOWN] = soundPool?.load(context, R.raw.downmaestro3, 1) ?: 0
-        soundMap[SpeedCategory.UNKNOWN] = soundPool?.load(context, R.raw.hintergrundemaestro2, 1) ?: 0
+// Dynamisches Laden der 4 Kategorien
+        loadCategorySound(SpeedCategory.SPEEDING_UP, R.raw.speedupmaestro3)
+        loadCategorySound(SpeedCategory.CRUISING, R.raw.maintainmaestro3)
+        loadCategorySound(SpeedCategory.SLOWING_DOWN, R.raw.downmaestro3)
+        loadCategorySound(SpeedCategory.UNKNOWN, R.raw.hintergrundemaestro2)
     }
+
+
 
     /**
      * Plays a sound effect from the SoundPool for the given SpeedCategory.
@@ -101,6 +102,54 @@ class MediaPlayerPlus(
             }
         }
     }
+
+    /**
+     * Definiert die Dateinamen für die benutzerdefinierten Sounds im internen Speicher
+     */
+    private fun getCustomSoundFile(category: SpeedCategory): File {
+        val fileName = when (category) {
+            SpeedCategory.SPEEDING_UP -> "custom_speed_up.mp3"
+            SpeedCategory.CRUISING -> "custom_cruising.mp3"
+            SpeedCategory.SLOWING_DOWN -> "custom_slowing_down.mp3"
+            SpeedCategory.UNKNOWN -> "custom_background.mp3"
+        }
+        return File(context.filesDir, fileName)
+    }
+
+
+
+    /**
+     * Prüft ob eine lokale Datei existiert, ansonsten wird das Raw-Fallback genutzt
+     */
+    private fun loadCategorySound(category: SpeedCategory, fallbackRawId: Int) {
+        val customFile = getCustomSoundFile(category)
+
+        val soundId = if (customFile.exists()) {
+            Log.d(
+                "MediaPlayerPlus",
+                "Loading custom sound for $category from ${customFile.absolutePath}"
+            )
+            soundPool?.load(customFile.absolutePath, 1) ?: 0
+        } else {
+            Log.d("MediaPlayerPlus", "Loading default sound for $category from resources")
+            soundPool?.load(context, fallbackRawId, 1) ?: 0
+        }
+
+        soundMap[category] = soundId
+    }
+
+    /**
+     * Ermöglicht es, die Sounds neu zu laden, nachdem eine Datei getauscht wurde
+     */
+    fun reloadSounds() {
+        soundsLoaded = false
+        soundsToLoadCount = 0
+        soundMap.clear()
+        soundPool?.release()
+        setupSoundPoolAndLoadSounds()
+    }
+
+
 
     fun updateBackgroundVolume(volume: Float) {
         backgroundVolume = volume

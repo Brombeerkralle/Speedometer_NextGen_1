@@ -2,4 +2,8 @@
     <string name="app_name" tools:ignore="Typos">Speedometer_NextGen_1</string>
     <string name="music_indicator_text">Music</string>
     <string name="test">Test</string>
+    <string name="menu_sound_speed_up">menu_sound_speed_up</string>
+    <string name="menu_sound_cruising">menu_sound_cruising</string>
+    <string name="menu_sound_slow_down">menu_sound_slow_down</string>
+    <string name="menu_sound_background">menu_sound_background</string>
 </resources>
