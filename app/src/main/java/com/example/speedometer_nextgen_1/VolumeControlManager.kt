@@ -1,4 +1,3 @@
-// File: VolumeControlManager.kt
 package com.example.speedometer_nextgen_1
 
 import android.app.AlertDialog
@@ -17,19 +16,16 @@ class VolumeControlManager(
     private val sharedPreferences: SharedPreferences,
     initialBackgroundVolume: Float,
     initialIndicatorVolume: Float,
-    var locationService: LocationService? = null // Add this parameter
+    var locationService: LocationService? = null
 ) {
     private var backgroundVolume: Float = initialBackgroundVolume
     private var indicatorVolume: Float = initialIndicatorVolume
     private var logarythmicVolume = backgroundVolume
     private var isDialogActive = false
-    private var isVolumeMaxUnlocked = false  // Renamed from isBackgroundSoundMaxUnlocked
+    private var isVolumeMaxUnlocked = false
 
-
-
-    // Show the volume control dialog
     fun showVolumeControlDialog() {
-        val dialogBinding = DialogVolumeControlBinding.inflate(LayoutInflater.from(context))  // Updated to use LayoutInflater.from(context)
+        val dialogBinding = DialogVolumeControlBinding.inflate(LayoutInflater.from(context))
 
         val dialog = AlertDialog.Builder(context)
             .setTitle("Volume Control")
@@ -37,27 +33,27 @@ class VolumeControlManager(
             .setNegativeButton("Confirm", null)
             .create()
 
-        // Set initial SeekBar progress based on current volume
-        dialogBinding.backgroundVolumeSeekBar.progress = (backgroundVolume*100).toInt()
-        dialogBinding.indicatorVolumeSeekBar.progress = (indicatorVolume*100).toInt()
+        dialogBinding.backgroundVolumeSeekBar.progress = (backgroundVolume * 100).toInt()
+        dialogBinding.indicatorVolumeSeekBar.progress = (indicatorVolume * 100).toInt()
 
-        dialogBinding.runSystemTestButton.setOnClickListener{
+        dialogBinding.runSystemTestButton.setOnClickListener {
             locationService?.triggerTestUpdate()
         }
 
-        // Setup SeekBar listener
+        dialogBinding.runFullAudioTestButton.setOnClickListener {
+            locationService?.triggerFullAudioTest()
+        }
+
         dialogBinding.backgroundVolumeSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 if (progress > 50 && !isVolumeMaxUnlocked && !isDialogActive) {
                     isDialogActive = true
                     showVolumeWarningDialog(dialogBinding, progress)
                 }
-                // volume=minVolume+(maxVolume−minVolume)×(progress/maxProgress)^p
                 val normalizedProgress = progress / 100.0f
                 backgroundVolume = normalizedProgress
                 logarythmicVolume = 0.01f + (100 - 1) * normalizedProgress.toDouble().pow(2.toDouble()).toFloat()
                 val scaledVolume = logarythmicVolume / 100
-
                 mediaPlayerPlus.updateBackgroundVolume(scaledVolume)
             }
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
@@ -68,8 +64,6 @@ class VolumeControlManager(
 
         dialogBinding.indicatorVolumeSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-
-                // volume=minVolume+(maxVolume−minVolume)×(progress/maxProgress)
                 indicatorVolume = progress / 100.0f
                 mediaPlayerPlus.updateIndicatorVolume(indicatorVolume)
             }
@@ -81,10 +75,9 @@ class VolumeControlManager(
 
         dialog.show()
 
-        // Set custom dimensions for the dialog
         dialog.window?.setLayout(
             WindowManager.LayoutParams.WRAP_CONTENT,
-            (context.resources.displayMetrics.heightPixels * 0.6).toInt()
+            WindowManager.LayoutParams.WRAP_CONTENT
         )
     }
 
@@ -95,23 +88,20 @@ class VolumeControlManager(
         }
     }
 
-    // Show warning dialog for high volume
     private fun showVolumeWarningDialog(dialogBinding: DialogVolumeControlBinding, progress: Int) {
         AlertDialog.Builder(context)
             .setTitle("Volume Warning")
             .setMessage("Listening at high volumes may damage hearing. Continue?")
             .setPositiveButton("Yes") { _, _ ->
-                isDialogActive = false  // Reset dialog state
+                isDialogActive = false
                 isVolumeMaxUnlocked = true
-                dialogBinding.backgroundVolumeSeekBar.progress = progress  // Unlock to chosen volume
+                dialogBinding.backgroundVolumeSeekBar.progress = progress
             }
             .setNegativeButton("No") { _, _ ->
-                isDialogActive = false  // Reset dialog state
-                dialogBinding.backgroundVolumeSeekBar.progress = 50  // Limit volume to 50%
+                isDialogActive = false
+                dialogBinding.backgroundVolumeSeekBar.progress = 50
             }
             .setCancelable(false)
             .show()
     }
-
-
 }
