@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.pm.ServiceInfo
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
@@ -30,6 +31,8 @@ class LocationService : Service() {
     private lateinit var sensorManager: SensorManager
     private lateinit var accelerometer: Sensor
     private var accelerationMagnitude: Float = 0f
+
+    private var accelerometerListener: SensorEventListener? = null
 
     // LiveData für die MainActivity
     val speedData = MutableLiveData<Int>()
@@ -60,6 +63,13 @@ class LocationService : Service() {
 
     inner class LocalBinder : Binder() {
         fun getService(): LocationService = this@LocationService
+    }
+
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+// Falls der Service vom System getötet wird, soll er nicht
+// automatisch neu starten (da wir ihn über die App kontrollieren)
+        return Service.START_NOT_STICKY
     }
 
     override fun onBind(intent: Intent?): IBinder {
@@ -96,7 +106,7 @@ class LocationService : Service() {
     private fun initAccelerometer() {
         sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)!!
-        val accelerometerListener = object : SensorEventListener {
+        accelerometerListener = object : SensorEventListener {
             override fun onSensorChanged(event: SensorEvent) {
                 val x = event.values[0]
                 val y = event.values[1]
@@ -117,12 +127,17 @@ class LocationService : Service() {
         val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         manager.createNotificationChannel(channel)
         val notification = NotificationCompat.Builder(this, channelId)
-            .setContentTitle("Location Service")
-            .setContentText("Tracking location in the background")
+            .setContentTitle("Speedometer Aktiv")
+            .setContentText("GPS Tracking läuft...")
             .setSmallIcon(R.drawable.ic_location)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setOngoing(true) // Verhindert einfaches Wegwischen
+            .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
             .build()
-        startForeground(1, notification)
+        startForeground(
+            1,
+            notification,
+            ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
+        )
     }
 
     private fun createLocationCallback() {
@@ -204,15 +219,25 @@ class LocationService : Service() {
         fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
     }
 
+        override fun onDestroy() {
+        Log.d("LocationService", "Service wird zerstört - Stoppe GPS und Sensoren")
 
-    override fun onDestroy() {
+        // 1. Standort-Updates stoppen
+        if (::fusedLocationClient.isInitialized && ::locationCallback.isInitialized) {
+            fusedLocationClient.removeLocationUpdates(locationCallback)
+        }
+
+        // 2. Sensoren abmelden (mit der korrekten Referenz)
+        accelerometerListener?.let {
+            sensorManager.unregisterListener(it)
+        }
+
+        // 3. Foreground-Benachrichtigung entfernen
+        // STOP_FOREGROUND_REMOVE entfernt das Icon sofort aus der Statusleiste
+        stopForeground(STOP_FOREGROUND_REMOVE)
+
         super.onDestroy()
-        fusedLocationClient.removeLocationUpdates(locationCallback)
-        sensorManager.unregisterListener(object : SensorEventListener {
-            override fun onSensorChanged(event: SensorEvent) {}
-
-            override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {}
-        })
+        Log.d("LocationService", "Service sicher beendet")
     }
 
     // SpeedFilter class

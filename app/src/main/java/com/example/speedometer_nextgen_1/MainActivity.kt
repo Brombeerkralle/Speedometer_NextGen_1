@@ -29,10 +29,15 @@ import androidx.core.graphics.ColorUtils
 import org.koin.android.ext.android.inject
 import org.koin.core.parameter.parametersOf
 import android.Manifest
+import android.app.Service
+import android.content.BroadcastReceiver
 import android.content.ComponentName
+import android.content.Context
 import android.content.ServiceConnection
 import android.os.IBinder
 
+// Oben bei den Konstanten oder als top-level
+private const val ACTION_EXTERNAL_SHUTDOWN = "com.example.speedometer_nextgen_1.FORCE_SHUTDOWN"
 
 class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, EasyPermissions.RationaleCallbacks {
 
@@ -45,6 +50,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
 
     private var locationService: LocationService? = null
     private var isBound = false
+
 
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
@@ -127,6 +133,15 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Shutdown-Receiver registrieren
+        val filter = android.content.IntentFilter(ACTION_EXTERNAL_SHUTDOWN)
+        ContextCompat.registerReceiver(
+            this,
+            shutdownReceiver,
+            filter,
+            ContextCompat.RECEIVER_EXPORTED // Wichtig für API 34+ für externe Broadcasts
+        )
+
         // Initialize layout components
         initializeLayout()
         otherInits()
@@ -153,7 +168,6 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
         }
 
     }
-
 
 
     // Function to initialize layout components, colors, and window insets
@@ -301,6 +315,17 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
         //mediaPlayerPlus.loadSounds()
     }
 
+    // Innerhalb der MainActivity Klasse
+    private val shutdownReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == ACTION_EXTERNAL_SHUTDOWN) {
+                Log.d("MainActivity", "Externer Shutdown-Broadcast empfangen. Beende App...")
+                // finish() löst die gesamte Aufräumlogik in onDestroy() aus
+                finishAndRemoveTask()
+            }
+        }
+    }
+
     override fun onPause() {
         Toast.makeText(this, "onPause", Toast.LENGTH_SHORT).show()
         super.onPause()
@@ -320,23 +345,38 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
 
 
     override fun onDestroy() {
-        Log.d("MainActivity", "Receiver Destroyed\n.\n.\n.\n.")
-        Toast.makeText(this, "onDestroy", Toast.LENGTH_SHORT).show()
+        Log.d("MainActivity", "App wird beendet - Bereinigung gestartet")
 
-        // Stop both services
+        // 1. Den Shutdown-Broadcast-Receiver abmelden (WICHTIG!)
+        // Da dieser in onCreate registriert wurde, muss er hier zwingend gelöst werden.
+        try {
+            unregisterReceiver(shutdownReceiver)
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Shutdown-Receiver war nicht registriert oder bereits gelöst", e)
+        }
+
+        // 2. Service-Binding lösen
+        // Das Binding sollte gelöst werden, bevor der Service gestoppt wird.
+        if (isBound) {
+            unbindService(serviceConnection)
+            isBound = false
+        }
+
+        // 3. Foreground-Services explizit stoppen
+        // Dies sorgt dafür, dass die GPS-Nutzung und die Audio-Benachrichtigung beendet werden.
         val locationServiceIntent = Intent(this, LocationService::class.java)
         stopService(locationServiceIntent)
 
         val audioServiceIntent = Intent(this, IndicatorAudioForegroundservice::class.java)
         stopService(audioServiceIntent)
 
-        if (isBound) {
-            unbindService(serviceConnection)
-            isBound = false
-        }
-
+        // 4. Media-Ressourcen freigeben
+        // Wichtig, um Audio-Hardware-Ressourcen sofort für das System freizugeben.
         mediaPlayerPlus.release()
         mediaPlayerPlus.releaseBackgroundPlayer()
+
+        // 5. Letztes Log vor dem endgültigen Ende
+        Log.d("MainActivity", "Receiver und Services gestoppt. GPS sicher beendet.")
 
         super.onDestroy()
     }
