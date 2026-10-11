@@ -9,17 +9,37 @@ import org.koin.android.ext.koin.androidContext
 // Define the Koin module for your dependencies
 val appModule = module {
     single { androidContext().getSharedPreferences("default_prefs", Context.MODE_PRIVATE) }
-    single { MediaPlayerPlus(
-        androidContext(),
-        get<SharedPreferences>().getFloat("backgroundVolume", 0.01f),
-        get<SharedPreferences>().getFloat("indicatorVolume", 1f)
-    ) }
-   factory { (activity: AppCompatActivity) ->
+    
+    single { 
+        val prefs = get<SharedPreferences>()
+        val bgVol = getSafeVolume(prefs, "backgroundVolume", 0.01f)
+        val indVol = getSafeVolume(prefs, "indicatorVolume", 1f)
+        
+        MediaPlayerPlus(
+            androidContext(),
+            bgVol,
+            indVol
+        ) 
+    }
+    
+    factory { (activity: AppCompatActivity) ->
+        val prefs = get<SharedPreferences>()
+        val bgVol = getSafeVolume(prefs, "backgroundVolume", 0.01f)
+        val indVol = getSafeVolume(prefs, "indicatorVolume", 1f)
+
         VolumeControlManager(
-            activity, get(), get(), get<SharedPreferences>().getFloat("backgroundVolume", 0.01f),
-            get<SharedPreferences>().getFloat("indicatorVolume", 1f)
+            activity, get(), prefs, bgVol, indVol, null
         )
     }
+    
     single { SpeedManagement(get()) }
     single { SharedPrefsManager.init(androidContext()) }
+}
+
+private fun getSafeVolume(prefs: SharedPreferences, key: String, default: Float): Float {
+    return try {
+        prefs.getFloat(key, default)
+    } catch (e: ClassCastException) {
+        prefs.getString(key, null)?.toFloatOrNull() ?: default
+    }
 }

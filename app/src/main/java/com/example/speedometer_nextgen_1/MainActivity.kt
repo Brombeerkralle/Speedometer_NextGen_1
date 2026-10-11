@@ -1,48 +1,40 @@
 package com.example.speedometer_nextgen_1
 
-/**
- * Latest Running Version
- * Fully operational
- * Latest one on Win11 Narwahl
- */
-
+import android.Manifest
+import android.app.AlertDialog
+import android.content.BroadcastReceiver
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
+import android.content.ServiceConnection
+import android.content.pm.PackageManager
+import android.graphics.Color
+import android.net.Uri
 import android.os.Bundle
+import android.os.IBinder
+import android.text.SpannableString
+import android.text.style.ForegroundColorSpan
+import android.util.Log
 import android.view.WindowManager
+import android.view.WindowInsetsController
 import android.widget.Button
+import android.widget.PopupMenu
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.ColorUtils
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.speedometer_nextgen_1.databinding.ActivityMainBinding
-import pub.devrel.easypermissions.EasyPermissions
-import android.content.Intent
-import android.content.pm.PackageManager
-import android.util.Log
-import android.view.Menu
-import android.view.MenuItem
-import android.view.WindowInsetsController
-import android.widget.PopupMenu
-import androidx.core.app.ActivityCompat
-import androidx.core.graphics.ColorUtils
 import org.koin.android.ext.android.inject
 import org.koin.core.parameter.parametersOf
-import android.Manifest
-import android.app.Service
-import android.content.BroadcastReceiver
-import android.content.ComponentName
-import android.content.Context
-import android.content.ServiceConnection
-import android.net.Uri
-import android.os.IBinder
-import androidx.activity.result.contract.ActivityResultContracts
+import pub.devrel.easypermissions.EasyPermissions
 import java.io.File
-import android.text.SpannableString
-import android.text.style.ForegroundColorSpan
-import android.graphics.Color
+import java.util.Locale
 
-// Oben bei den Konstanten oder als top-level
 private const val ACTION_EXTERNAL_SHUTDOWN = "com.example.speedometer_nextgen_1.FORCE_SHUTDOWN"
 
 class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, EasyPermissions.RationaleCallbacks {
@@ -50,13 +42,12 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
     private lateinit var binding: ActivityMainBinding
     private val speedManagement: SpeedManagement by inject()
     private val mediaPlayerPlus: MediaPlayerPlus by inject()
-    private val volumeControlManager: VolumeControlManager by inject() { parametersOf(this) }
+    private val volumeControlManager: VolumeControlManager by inject { parametersOf(this) }
 
     private val LOCATION_PERMISSION_REQUEST_CODE = 100
 
     private var locationService: LocationService? = null
     private var isBound = false
-
 
     private val audioPickerLauncher = registerForActivityResult(
         ActivityResultContracts.GetContent()
@@ -64,19 +55,14 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
         uri?.let { handleSelectedAudio(it) }
     }
 
-    // 2. Variable um zu merken, für welche Kategorie wir gerade wählen
     private var pendingCategory: SpeedCategory? = null
-
-
 
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
             val binder = service as LocationService.LocalBinder
             locationService = binder.getService()
             isBound = true
-            // Correct place to set the LocationService on the manager
             volumeControlManager.locationService = locationService
-            // Observer auf die LiveData des Service setzen
             observeLocationData()
         }
         override fun onServiceDisconnected(name: ComponentName?) {
@@ -85,26 +71,169 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
         }
     }
 
-    private fun checkAndRequestLocationPermission() {
-        if (ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                LOCATION_PERMISSION_REQUEST_CODE
-            )
-        } else {
-            startLocationService()
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        val filter = android.content.IntentFilter(ACTION_EXTERNAL_SHUTDOWN)
+        ContextCompat.registerReceiver(
+            this,
+            shutdownReceiver,
+            filter,
+            ContextCompat.RECEIVER_EXPORTED
+        )
+
+        initializeLayout()
+        otherInits()
+
+        findViewById<Button>(R.id.openVolumeControlButton).setOnClickListener {
+            volumeControlManager.showVolumeControlDialog()
+        }
+
+        findViewById<Button>(R.id.destroyApp).setOnClickListener {
+            finishAndRemoveTask()
+        }
+
+        binding.menuButton.setOnClickListener { view ->
+            showAudioPopupMenu(view)
         }
     }
 
-    private fun startLocationService() {
-        val locationServiceIntent = Intent(this, LocationService::class.java)
-        ContextCompat.startForegroundService(this, locationServiceIntent)
-        bindService(locationServiceIntent, serviceConnection, BIND_AUTO_CREATE)
+    private fun showAudioPopupMenu(view: android.view.View) {
+        val popup = PopupMenu(this, view)
+        popup.menuInflater.inflate(R.menu.audio_selection_menu, popup.menu)
+
+        val menu = popup.menu
+        val categoryMap = mapOf(
+            R.id.menu_speed_up to SpeedCategory.SPEEDING_UP,
+            R.id.menu_cruising to SpeedCategory.CRUISING,
+            R.id.menu_slow_down to SpeedCategory.SLOWING_DOWN,
+            R.id.menu_background to SpeedCategory.UNKNOWN
+        )
+
+        for (i in 0 until menu.size()) {
+            val item = menu.getItem(i)
+            val category = categoryMap[item.itemId] ?: continue
+            
+            val isEnabled = mediaPlayerPlus.isCategoryEnabled(category)
+            val hasCustom = isCustomSoundPresent(category)
+            
+            val statusIcon = if (isEnabled) "●" else "○"
+            val customIcon = if (hasCustom) " ✓" else ""
+            
+            val newTitle = "$statusIcon ${item.title}$customIcon"
+            val spanString = SpannableString(newTitle)
+            
+            if (isEnabled) {
+                spanString.setSpan(ForegroundColorSpan(Color.GREEN), 0, 1, 0)
+            } else {
+                spanString.setSpan(ForegroundColorSpan(Color.RED), 0, 1, 0)
+            }
+            
+            item.title = spanString
+        }
+
+        popup.setOnMenuItemClickListener { item ->
+            val category = categoryMap[item.itemId]
+            if (category != null) {
+                showCategoryOptions(category)
+            }
+            true
+        }
+        popup.show()
+    }
+
+    private fun showCategoryOptions(category: SpeedCategory) {
+        val isEnabled = mediaPlayerPlus.isCategoryEnabled(category)
+        val hasCustom = isCustomSoundPresent(category)
+        
+        val options = mutableListOf<String>()
+        options.add(if (isEnabled) "Disable Sound" else "Enable Sound")
+        options.add("Select New Sound File")
+        if (hasCustom) {
+            options.add("Reset to Default Sound")
+        }
+
+        val categoryName = category.name.replace("_", " ").lowercase()
+            .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+
+        AlertDialog.Builder(this)
+            .setTitle("$categoryName Settings")
+            .setItems(options.toTypedArray()) { _, which ->
+                when (which) {
+                    0 -> {
+                        mediaPlayerPlus.setCategoryEnabled(category, !isEnabled)
+                        Toast.makeText(this, "$categoryName ${if (!isEnabled) "enabled" else "disabled"}", Toast.LENGTH_SHORT).show()
+                    }
+                    1 -> openAudioPicker(category)
+                    2 -> {
+                        val file = File(filesDir, getFileNameForCategory(category))
+                        if (file.exists()) {
+                            file.delete()
+                            mediaPlayerPlus.reloadSounds()
+                            Toast.makeText(this, "Reset to default", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            }
+            .show()
+    }
+
+    private fun openAudioPicker(category: SpeedCategory) {
+        pendingCategory = category
+        audioPickerLauncher.launch("audio/*")
+    }
+
+    private fun handleSelectedAudio(uri: Uri) {
+        val category = pendingCategory ?: return
+        val fileName = getFileNameForCategory(category)
+        val destinationFile = File(filesDir, fileName)
+
+        try {
+            contentResolver.openInputStream(uri)?.use { input ->
+                destinationFile.outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            }
+            Log.d("AudioSetup", "Saved sound for ${category.name}")
+            Toast.makeText(this, "Sound for ${category.name} updated! ✓", Toast.LENGTH_SHORT).show()
+            mediaPlayerPlus.reloadSounds()
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error saving audio for $category", e)
+            Toast.makeText(this, "Error saving audio!", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun isCustomSoundPresent(category: SpeedCategory): Boolean {
+        return File(filesDir, getFileNameForCategory(category)).exists()
+    }
+
+    private fun getFileNameForCategory(category: SpeedCategory): String {
+        return when (category) {
+            SpeedCategory.SPEEDING_UP -> "custom_speed_up.mp3"
+            SpeedCategory.CRUISING -> "custom_cruising.mp3"
+            SpeedCategory.SLOWING_DOWN -> "custom_slowing_down.mp3"
+            SpeedCategory.UNKNOWN -> "custom_background.mp3"
+        }
+    }
+
+    private fun initializeLayout() {
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, insets ->
+            val systemBarsInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            view.setPadding(systemBarsInsets.left, systemBarsInsets.top, systemBarsInsets.right, systemBarsInsets.bottom)
+            insets
+        }
+        updateSystemBarsColor(ContextCompat.getColor(this, R.color.black))
+    }
+
+    private fun otherInits() {
+        checkAndRequestLocationPermission()
+        val indicatorAudioIntent = Intent(this, IndicatorAudioForegroundservice::class.java)
+        ContextCompat.startForegroundService(this, indicatorAudioIntent)
+        mediaPlayerPlus.playSilentAudio()
     }
 
     private fun observeLocationData() {
@@ -118,199 +247,30 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
         locationService?.gpsLocationAccuracyData?.observe(this) { accuracy ->
             binding.infotainmentIDright.text = accuracy.toString().take(4)
         }
-        // Die anderen LiveData-Observer hier einfügen...
     }
 
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-
-        EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this)
-
-        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
-            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(this, "Berechtigung erteilt", Toast.LENGTH_SHORT).show()
-                startLocationService()
-            } else {
-                Toast.makeText(
-                    this,
-                    "Standort-Berechtigung erforderlich für GPS-Funktion.",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
+    private fun checkAndRequestLocationPermission() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), LOCATION_PERMISSION_REQUEST_CODE)
+        } else {
+            startLocationService()
         }
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
-        // Shutdown-Receiver registrieren
-        val filter = android.content.IntentFilter(ACTION_EXTERNAL_SHUTDOWN)
-        ContextCompat.registerReceiver(
-            this,
-            shutdownReceiver,
-            filter,
-            ContextCompat.RECEIVER_EXPORTED // Wichtig für API 34+ für externe Broadcasts
-        )
-
-        // Initialize layout components
-        initializeLayout()
-        otherInits()
-
-
-
-        // Setup button to open volume control
-        findViewById<Button>(R.id.openVolumeControlButton).setOnClickListener {
-            volumeControlManager.showVolumeControlDialog()
-        }
-
-        findViewById<Button>(R.id.destroyApp).setOnClickListener {
-            // finishAndRemoveTask() sorgt dafür, dass die App auch aus der
-            // "Letzte Apps"-Liste verschwindet und onDestroy() sauber durchläuft.
-            finishAndRemoveTask()
-        }
-
-        binding.menuButton.setOnClickListener { view ->
-            val popup = PopupMenu(this, view)
-            popup.menuInflater.inflate(R.menu.audio_selection_menu, popup.menu)
-
-            val menu = popup.menu
-            val categoryMap = mapOf(
-                R.id.menu_speed_up to SpeedCategory.SPEEDING_UP,
-                R.id.menu_cruising to SpeedCategory.CRUISING,
-                R.id.menu_slow_down to SpeedCategory.SLOWING_DOWN,
-                R.id.menu_background to SpeedCategory.UNKNOWN
-            )
-
-            for (i in 0 until menu.size()) {
-                val item = menu.getItem(i)
-                val category = categoryMap[item.itemId]
-
-                if (category != null && isCustomSoundPresent(category)) {
-                    // 1. Text mit Häkchen versehen
-                    val newTitle = "✓ ${item.title}"
-
-                    // 2. Farbe auf Grün setzen mittels SpannableString
-                    val spanString = SpannableString(newTitle)
-                    spanString.setSpan(
-                        ForegroundColorSpan(Color.GREEN),
-                        0,
-                        spanString.length,
-                        0
-                    )
-                    item.title = spanString
-                }
-            }
-
-            popup.setOnMenuItemClickListener { item ->
-                when (item.itemId) {
-                    R.id.menu_speed_up -> openAudioPicker(SpeedCategory.SPEEDING_UP)
-                    R.id.menu_cruising -> openAudioPicker(SpeedCategory.CRUISING)
-                    R.id.menu_slow_down -> openAudioPicker(SpeedCategory.SLOWING_DOWN)
-                    R.id.menu_background -> openAudioPicker(SpeedCategory.UNKNOWN)
-                }
-                true
-            }
-            popup.show()
-        }
+    private fun startLocationService() {
+        val intent = Intent(this, LocationService::class.java)
+        ContextCompat.startForegroundService(this, intent)
+        bindService(intent, serviceConnection, BIND_AUTO_CREATE)
     }
 
-
-    // Function to initialize layout components, colors, and window insets
-    private fun initializeLayout() {
-        // Prevent the screen from turning off
-        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-
-        // Make the status bar and navigation bar transparent and enable edge-to-edge content
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-
-        // Set edge-to-edge UI and window insets handling
-        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, insets ->
-            // Retrieve the insets for system bars (status bar, navigation bar, etc.)
-            val systemBarsInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            // Apply padding to the view based on the insets
-            view.setPadding(
-                systemBarsInsets.left,
-                systemBarsInsets.top,
-                systemBarsInsets.right,
-                systemBarsInsets.bottom
-            )
-            insets
-        }
-        // Set initial status and navigation bar colors to your default background color
-        updateSystemBarsColor(ContextCompat.getColor(this, R.color.black))
-    }
-
-    private fun otherInits() {
-        checkAndRequestLocationPermission()
-
-        val indicatorAudioForegroundserviceIntent = Intent(this, IndicatorAudioForegroundservice::class.java)
-        ContextCompat.startForegroundService(this, indicatorAudioForegroundserviceIntent)
-
-        mediaPlayerPlus.playSilentAudio()
-    }
-
-    private fun updateSystemBarsColor(color: Int) {
-        window.statusBarColor = color
-        window.navigationBarColor = color
-
-        //Change Status Bar Text to White
-        val insetsController = window.insetsController
-        if (insetsController != null) {
-            if (isLightBackground(color)) {
-                // Text/Icons dunkel (für helle Hintergründe)
-                insetsController.setSystemBarsAppearance(
-                    WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS,
-                    WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
-                )
-            } else {
-                // Text/Icons hell (für dunkle Hintergründe)
-                insetsController.setSystemBarsAppearance(
-                    0,
-                    WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
-                )
-            }
-        }
-    }
-    private fun isLightBackground(color: Int): Boolean {
-        return ColorUtils.calculateLuminance(color) > 0.5
-    }
-
-
-/*
-    private val locationUpdateReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            val speed = intent?.getIntExtra("speed", 0) ?: 0
-            val speedDecimal = intent?.getStringExtra("speedDecimal") ?: "*"
-            val accelerationMagnitude = intent?.getFloatExtra("accelerationMagnitude", 99f) ?: 0
-            val gpsLocationAccuracy = intent?.getFloatExtra("gpsLocationAccuracy", 99f) ?: 0
- //Log.d("MainActivity", "Broadcast received: $speed,$speedDecimal | Gyro: $accelerationMagnitude")
-            // Update the UI on the main thread
-            runOnUiThread {
-                callSpeedIndicators(speed, speedDecimal, accelerationMagnitude.toString(), gpsLocationAccuracy)
-            }
-        }
-    }*/
-
-
-    // Function that handles speed changes and calls background color change or music playback
     private fun handleSpeedIndicators(speed: Int) {
-       // Log.w("MainActivity", "handleSpeedIndicators() has been called")
         val speedHasChanged = speedManagement.hasSpeedChanged(speed)
         val categoryHasChanged = speedManagement.hasCategoryChangedFlag()
-        //Log.w("MainActivity", "handleSpeedIndicators()  called      -       categoryHasChanged = $categoryHasChanged")
+        
         if (categoryHasChanged) {
             binding.infotainmentIDleft.text = getString(R.string.music_indicator_text)
-           // Log.w("MainActivity", "\nmnusic")
         } else {
             binding.infotainmentIDleft.text = " "
-           // Log.w("MainActivity", "\nempty music")
         }
 
         if (speedHasChanged) {
@@ -318,155 +278,65 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
                 binding.root.setBackgroundColor(color)
                 updateSystemBarsColor(color)
             }
-            speedManagement.previousSpeed = speed
         }
     }
 
-    /*
- * AUDIO SYSTEM: Konsolidierte Logik für Kategorien
- * Dieser Block ersetzt alle doppelten Picker-Definitionen
- */
-
-    private fun openAudioPicker(category: SpeedCategory) {
-        pendingCategory = category
-        audioPickerLauncher.launch("audio/*")
-    }
-
-    private fun handleSelectedAudio(uri: Uri) {
-        val category = pendingCategory ?: return
-
-        // Einheitliche Dateinamen-Vergabe über eine Hilfsfunktion
-        val fileName = getFileNameForCategory(category)
-        val destinationFile = File(filesDir, fileName)
-
-        try {
-            contentResolver.openInputStream(uri)?.use { input ->
-                destinationFile.outputStream().use { output ->
-                    input.copyTo(output)
-                }
-            }
-
-            Log.d("AudioSetup", "Datei für ${category.name} gespeichert: ${destinationFile.absolutePath}")
-            Toast.makeText(this, "Sound für ${category.name} aktualisiert! ✓", Toast.LENGTH_SHORT).show()
-
-            // Benachrichtigt den Player, dass neue Dateien auf dem Speicher liegen
-            mediaPlayerPlus.reloadSounds()
-
-        } catch (e: Exception) {
-            Log.e("MainActivity", "Fehler beim Speichern der Audio-Datei für $category", e)
-            Toast.makeText(this, "Fehler beim Speichern!", Toast.LENGTH_SHORT).show()
+    private fun updateSystemBarsColor(color: Int) {
+        window.statusBarColor = color
+        window.navigationBarColor = color
+        val insetsController = window.insetsController
+        if (insetsController != null) {
+            val appearance = if (ColorUtils.calculateLuminance(color) > 0.5) {
+                WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
+            } else 0
+            insetsController.setSystemBarsAppearance(appearance, WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS)
         }
     }
 
-    private fun isCustomSoundPresent(category: SpeedCategory): Boolean {
-        return File(filesDir, getFileNameForCategory(category)).exists()
-    }
-
-    // Zentrale Verwaltung der Dateinamen, um Fehler zu vermeiden
-    private fun getFileNameForCategory(category: SpeedCategory): String {
-        return when (category) {
-            SpeedCategory.SPEEDING_UP -> "custom_speed_up.mp3"
-            SpeedCategory.CRUISING -> "custom_cruising.mp3"
-            SpeedCategory.SLOWING_DOWN -> "custom_slow_down.mp3"
-            SpeedCategory.UNKNOWN -> "custom_background.mp3"
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this)
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            startLocationService()
         }
     }
 
-    /* ENDE AUDIO SYSTEM */
+    override fun onPermissionsDenied(requestCode: Int, perms: MutableList<String>) {}
+    override fun onPermissionsGranted(requestCode: Int, perms: MutableList<String>) {}
+    override fun onRationaleAccepted(requestCode: Int) {}
+    override fun onRationaleDenied(requestCode: Int) {}
 
-
-    override fun onPermissionsDenied(requestCode: Int, perms: MutableList<String>) {
-        //gpsGetSpeed.onPermissionsDenied(perms)
-        Toast.makeText(this, "onPermissionsDenied", Toast.LENGTH_SHORT).show()
-    }
-    override fun onPermissionsGranted(requestCode: Int, perms: MutableList<String>) {
-        //gpsGetSpeed.startLocationUpdates()
-        Toast.makeText(this, "onPermissionsGranted", Toast.LENGTH_SHORT).show()
-    }
     override fun onResume() {
-        Toast.makeText(this, "onResume", Toast.LENGTH_SHORT).show()
         super.onResume()
-        /*val filter = IntentFilter("com.example.speedometer_nextgen_1.LOCATION_UPDATE")
-        ContextCompat.registerReceiver(
-            this,
-            locationUpdateReceiver,
-            filter,
-            ContextCompat.RECEIVER_EXPORTED
-        )
-        Log.d("MainActivity", "Receiver registered in onResume")
-        mediaPlayerPlus.loadSounds()*/
-
-        Log.d("MainActivity", "onResume - attempting to bind to service")
         val intent = Intent(this, LocationService::class.java)
         bindService(intent, serviceConnection, BIND_AUTO_CREATE)
-        //mediaPlayerPlus.loadSounds()
     }
 
+    override fun onPause() {
+        super.onPause()
+        if (isBound) {
+            unbindService(serviceConnection)
+            isBound = false
+        }
+    }
 
     private val shutdownReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == ACTION_EXTERNAL_SHUTDOWN) {
-                Log.d("MainActivity", "Externer Shutdown-Broadcast empfangen. Beende App...")
-                // finish() löst die gesamte Aufräumlogik in onDestroy() aus
                 finishAndRemoveTask()
             }
         }
     }
 
-    override fun onPause() {
-        Toast.makeText(this, "onPause", Toast.LENGTH_SHORT).show()
-        super.onPause()
-        Log.d("MainActivity", "Receiver unregistered in onPause")
-        if (isBound) {
-            unbindService(serviceConnection)
-            isBound = false
-        }
-    }
-
-    override fun onStop() {
-        Toast.makeText(this, "onStop", Toast.LENGTH_SHORT).show()
-        super.onStop()
-       // unregisterReceiver(locationUpdateReceiver)
-        Log.d("MainActivity", "Receiver unregistered in onStop")
-    }
-
-
     override fun onDestroy() {
-        Log.d("MainActivity", "App wird beendet - Bereinigung gestartet")
-
-        // 1. Den Shutdown-Broadcast-Receiver abmelden (WICHTIG!)
-        // Da dieser in onCreate registriert wurde, muss er hier zwingend gelöst werden.
-        try {
-            unregisterReceiver(shutdownReceiver)
-        } catch (e: Exception) {
-            Log.e("MainActivity", "Shutdown-Receiver war nicht registriert oder bereits gelöst", e)
-        }
-
-        // 2. Service-Binding lösen
-        // Das Binding sollte gelöst werden, bevor der Service gestoppt wird.
+        try { unregisterReceiver(shutdownReceiver) } catch (e: Exception) {}
         if (isBound) {
             unbindService(serviceConnection)
             isBound = false
         }
-
-        // 3. Foreground-Services explizit stoppen
-        // Dies sorgt dafür, dass die GPS-Nutzung und die Audio-Benachrichtigung beendet werden.
-        val locationServiceIntent = Intent(this, LocationService::class.java)
-        stopService(locationServiceIntent)
-
-        val audioServiceIntent = Intent(this, IndicatorAudioForegroundservice::class.java)
-        stopService(audioServiceIntent)
-
-        // 4. Media-Ressourcen freigeben
-        // Wichtig, um Audio-Hardware-Ressourcen sofort für das System freizugeben.
+        stopService(Intent(this, LocationService::class.java))
+        stopService(Intent(this, IndicatorAudioForegroundservice::class.java))
         mediaPlayerPlus.release()
-        mediaPlayerPlus.releaseBackgroundPlayer()
-
-        // 5. Letztes Log vor dem endgültigen Ende
-        Log.d("MainActivity", "Receiver und Services gestoppt. GPS sicher beendet.")
-
         super.onDestroy()
     }
-    override fun onRationaleAccepted(requestCode: Int) {}
-    override fun onRationaleDenied(requestCode: Int) {}
 }
