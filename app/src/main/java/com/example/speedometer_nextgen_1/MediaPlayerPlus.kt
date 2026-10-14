@@ -23,6 +23,7 @@ class MediaPlayerPlus(
     var soundsLoaded = false
     private var soundsToLoadCount = 0
     private var totalSoundsToLoad = 0
+    private var lastStreamId: Int = 0
 
     private val audioPrefs: SharedPreferences = context.getSharedPreferences("audio_settings", Context.MODE_PRIVATE)
     private val idealCruiseSpeeds = listOf(30, 50, 70, 80)
@@ -85,8 +86,18 @@ class MediaPlayerPlus(
         val key = getSoundKey(category, targetSpeed)
         val soundId = soundMap[key]
         if (soundId != null && soundId != 0) {
-            soundPool?.play(soundId, indicatorVolume, indicatorVolume, 0, 0, 1.0f)
-            Log.i("MediaPlayerPlus", "Audio played for: $key")
+            if (lastStreamId != 0) {
+                soundPool?.stop(lastStreamId)
+            }
+            lastStreamId = soundPool?.play(soundId, indicatorVolume, indicatorVolume, 0, 0, 1.0f) ?: 0
+            Log.i("MediaPlayerPlus", "Audio played immediately for priority: $key (streamId: $lastStreamId)")
+        }
+    }
+
+    fun stopIndicatorSound() {
+        if (lastStreamId != 0) {
+            soundPool?.stop(lastStreamId)
+            lastStreamId = 0
         }
     }
 

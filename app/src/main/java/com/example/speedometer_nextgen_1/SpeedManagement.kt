@@ -38,6 +38,12 @@ class SpeedManagement(context: Context) {
         return SpeedStatus(SpeedCategory.UNKNOWN)
     }
 
+    fun reset() {
+        previousSpeed = null
+        previousStatus = null
+        categoryChangedFlag = false
+    }
+
     // Function to check if the speed has changed significantly
     fun hasSpeedChanged(currentSpeed: Int): Boolean {
         val changed = previousSpeed == null || abs(currentSpeed - (previousSpeed ?: 0)) > 1

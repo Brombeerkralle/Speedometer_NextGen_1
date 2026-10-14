@@ -58,6 +58,13 @@ class IndicatorAudioForegroundservice : Service(), LocationService.LocationUpdat
     }
 
     override fun onLocationUpdate(speed: Int, speedAsDecimal: String, accelerationMagnitude: Float, gpsLocationAccuracy: Number) {
+        // If standing still (speed < 3 km/h, e.g. at a traffic light), stop indicator sound and reset status
+        if (speed < 15) {
+            mediaPlayerPlus.stopIndicatorSound()
+            speedManagement.reset()
+            return
+        }
+
         val categoryHasChanged = speedManagement.hasCategoryChanged(speed)
         Log.w("IndicatorAudioService", "speed = $speed")
         if (categoryHasChanged) {

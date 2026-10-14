@@ -1,7 +1,7 @@
 [versions]
 agp = "8.7.2"                     # Android Gradle Plugin
-kotlin = "1.9.10"                 # Latest stable Kotlin version
-coreKtx = "1.12.0"                # Latest stable core-ktx
+kotlin = "2.0.21"                 # Updated to stable Kotlin 2.0.21
+coreKtx = "1.13.1"                # Updated stable core-ktx
 appcompat = "1.7.0"               # Latest stable AppCompat
 material = "1.12.0"               # Updated Material Components
 activity = "1.9.3"                # Latest stable Activity KTX
