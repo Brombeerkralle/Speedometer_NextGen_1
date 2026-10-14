@@ -93,7 +93,7 @@
             android:shadowDy="7"
             android:shadowRadius="1"
             android:textColor="#FFFFFF"
-            android:textSize="139sp" />
+            android:textSize="130sp" />
 
         <Button
             android:id="@+id/menuButton"

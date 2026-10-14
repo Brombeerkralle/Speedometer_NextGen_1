@@ -52,11 +52,23 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
     private val audioPickerLauncher = registerForActivityResult(
         ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        uri?.let { handleSelectedAudio(it) }
+        if (uri != null) {
+            handleSelectedAudio(uri)
+        } else {
+            if (currentBatchIndex >= 0) {
+                Toast.makeText(this, "Batch-Auswahl abgebrochen bei ${soundSlots.getOrNull(currentBatchIndex)?.displayName ?: ""}", Toast.LENGTH_SHORT).show()
+                currentBatchIndex = -1
+            }
+        }
     }
 
     private var pendingCategory: SpeedCategory? = null
     private var pendingTargetSpeed: Int? = null
+
+    // Sequential batch wizard state for choosing all sounds in sequence
+    private data class SoundSlot(val category: SpeedCategory, val targetSpeed: Int?, val displayName: String)
+    private val soundSlots = mutableListOf<SoundSlot>()
+    private var currentBatchIndex = -1
 
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
@@ -104,6 +116,13 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
     private fun showAudioPopupMenu(view: android.view.View) {
         val popup = PopupMenu(this, view)
         val menu = popup.menu
+
+        // Sequential batch option to choose all sounds in order
+        menu.add("🔄 Alle Sounds nacheinander zuweisen...").setOnMenuItemClickListener {
+            startBatchAudioPicker()
+            true
+        }
+        menu.add("-------------------------")
 
         // Background Sound Option
         val bgItem = menu.add("Hintergrund Sound")
@@ -209,12 +228,48 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks, E
                 }
             }
             Log.d("AudioSetup", "Saved sound for ${category.name} speed $targetSpeed")
-            Toast.makeText(this, "Sound aktualisiert! ✓", Toast.LENGTH_SHORT).show()
             mediaPlayerPlus.reloadSounds()
+
+            if (currentBatchIndex >= 0) {
+                currentBatchIndex++
+                promptNextBatchSlot()
+            } else {
+                Toast.makeText(this, "Sound aktualisiert! ✓", Toast.LENGTH_SHORT).show()
+            }
         } catch (e: Exception) {
             Log.e("MainActivity", "Error saving audio", e)
             Toast.makeText(this, "Fehler beim Speichern!", Toast.LENGTH_SHORT).show()
+            currentBatchIndex = -1
         }
+    }
+
+    private fun startBatchAudioPicker() {
+        soundSlots.clear()
+        soundSlots.add(SoundSlot(SpeedCategory.UNKNOWN, null, "Hintergrund (Silent Loop)"))
+        speedManagement.idealCruiseSpeeds.forEach { speed ->
+            soundSlots.add(SoundSlot(SpeedCategory.SPEEDING_UP, speed, "Beschleunigen ($speed km/h)"))
+            soundSlots.add(SoundSlot(SpeedCategory.CRUISING, speed, "Cruising ($speed km/h)"))
+            soundSlots.add(SoundSlot(SpeedCategory.SLOWING_DOWN, speed, "Bremsen ($speed km/h)"))
+        }
+        currentBatchIndex = 0
+        promptNextBatchSlot()
+    }
+
+    private fun promptNextBatchSlot() {
+        if (currentBatchIndex < 0 || currentBatchIndex >= soundSlots.size) {
+            currentBatchIndex = -1
+            mediaPlayerPlus.reloadSounds()
+            Toast.makeText(this, "Alle Sounds erfolgreich zugewiesen! ✓", Toast.LENGTH_LONG).show()
+            return
+        }
+
+        val slot = soundSlots[currentBatchIndex]
+        val progressText = "(${currentBatchIndex + 1}/${soundSlots.size})"
+        Toast.makeText(this, "Wähle Audio für: ${slot.displayName} $progressText", Toast.LENGTH_LONG).show()
+
+        pendingCategory = slot.category
+        pendingTargetSpeed = slot.targetSpeed
+        audioPickerLauncher.launch("audio/*")
     }
 
     private fun isCustomSoundPresent(category: SpeedCategory, targetSpeed: Int?): Boolean {
